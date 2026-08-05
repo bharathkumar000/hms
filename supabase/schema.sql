@@ -120,6 +120,71 @@ CREATE TABLE IF NOT EXISTS public.notifications (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- Lab Orders table
+CREATE TABLE IF NOT EXISTS public.lab_orders (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  patient_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  doctor_id UUID REFERENCES public.doctors(id) ON DELETE SET NULL,
+  test_category TEXT NOT NULL,
+  notes TEXT,
+  status TEXT DEFAULT 'Pending', -- Pending, Completed, Cancelled
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Emergency Cases table
+CREATE TABLE IF NOT EXISTS public.emergency_cases (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  patient_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  doctor_id UUID REFERENCES public.doctors(id) ON DELETE SET NULL,
+  priority TEXT NOT NULL, -- Critical, High, Medium
+  department TEXT NOT NULL,
+  notes TEXT,
+  arrival_time TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  status TEXT DEFAULT 'Active' -- Active, Resolved
+);
+
+-- Doctor Availability table
+CREATE TABLE IF NOT EXISTS public.doctor_availability (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  doctor_id UUID REFERENCES public.doctors(id) ON DELETE CASCADE NOT NULL,
+  working_days TEXT[] NOT NULL,
+  working_hours TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Leave Requests table
+CREATE TABLE IF NOT EXISTS public.leave_requests (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  doctor_id UUID REFERENCES public.doctors(id) ON DELETE CASCADE NOT NULL,
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  reason TEXT,
+  status TEXT DEFAULT 'Pending', -- Pending, Approved, Rejected
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Reception Staff table
+CREATE TABLE IF NOT EXISTS public.reception_staff (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  phone_number TEXT,
+  email TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Patient Queue table
+CREATE TABLE IF NOT EXISTS public.patient_queue (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  patient_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  appointment_id UUID REFERENCES public.appointments(id) ON DELETE SET NULL,
+  doctor_id UUID REFERENCES public.doctors(id) ON DELETE SET NULL,
+  token_number TEXT NOT NULL,
+  status TEXT DEFAULT 'Waiting', -- Waiting, In Consultation, Completed, Skipped
+  check_in_time TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
 -- Enable RLS
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
@@ -164,3 +229,50 @@ CREATE POLICY "Users can update own notifications" ON public.notifications FOR U
 
 -- Doctors table is readable by everyone (so patients can see doctor list)
 CREATE POLICY "Doctors are viewable by everyone" ON public.doctors FOR SELECT USING (true);
+
+-- Enable RLS on new tables
+ALTER TABLE public.lab_orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.emergency_cases ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.doctor_availability ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.leave_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reception_staff ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.patient_queue ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for Doctors
+-- In a real app, doctors would only access their own assigned patients.
+-- For this demo/development environment, we will allow doctors to view everything, 
+-- or limit to doctor_id where applicable.
+CREATE POLICY "Doctors view all appointments" ON public.appointments FOR SELECT USING (true);
+CREATE POLICY "Doctors update own appointments" ON public.appointments FOR UPDATE USING (auth.uid() = doctor_id);
+CREATE POLICY "Doctors view all medical records" ON public.medical_records FOR SELECT USING (true);
+CREATE POLICY "Doctors insert medical records" ON public.medical_records FOR INSERT WITH CHECK (auth.uid() = doctor_id);
+CREATE POLICY "Doctors update medical records" ON public.medical_records FOR UPDATE USING (auth.uid() = doctor_id);
+CREATE POLICY "Doctors view all prescriptions" ON public.prescriptions FOR SELECT USING (true);
+CREATE POLICY "Doctors insert prescriptions" ON public.prescriptions FOR INSERT WITH CHECK (auth.uid() = doctor_id);
+CREATE POLICY "Doctors view all profiles" ON public.profiles FOR SELECT USING (true);
+
+-- Doctor Availability
+CREATE POLICY "Doctors view own availability" ON public.doctor_availability FOR SELECT USING (auth.uid() = doctor_id);
+CREATE POLICY "Doctors insert own availability" ON public.doctor_availability FOR INSERT WITH CHECK (auth.uid() = doctor_id);
+CREATE POLICY "Doctors update own availability" ON public.doctor_availability FOR UPDATE USING (auth.uid() = doctor_id);
+
+-- Leave Requests
+CREATE POLICY "Doctors view own leave" ON public.leave_requests FOR SELECT USING (auth.uid() = doctor_id);
+CREATE POLICY "Doctors insert own leave" ON public.leave_requests FOR INSERT WITH CHECK (auth.uid() = doctor_id);
+
+-- Lab Orders
+CREATE POLICY "Doctors view all lab orders" ON public.lab_orders FOR SELECT USING (true);
+CREATE POLICY "Doctors insert lab orders" ON public.lab_orders FOR INSERT WITH CHECK (auth.uid() = doctor_id);
+
+-- Emergency Cases
+CREATE POLICY "Doctors view all emergency cases" ON public.emergency_cases FOR SELECT USING (true);
+
+-- RLS Policies for Reception Staff
+-- In this demo environment, reception staff have full access to these tables.
+CREATE POLICY "Reception staff full access profiles" ON public.profiles FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Reception staff full access appointments" ON public.appointments FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Reception staff full access patient_queue" ON public.patient_queue FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Reception staff full access bills" ON public.bills FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Reception staff full access payments" ON public.payments FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Reception staff view own profile" ON public.reception_staff FOR SELECT USING (true);
+CREATE POLICY "Reception staff update own profile" ON public.reception_staff FOR UPDATE USING (auth.uid() = user_id);

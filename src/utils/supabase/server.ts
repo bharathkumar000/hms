@@ -15,9 +15,12 @@ export async function createClient() {
     console.error('Error: NEXT_PUBLIC_SUPABASE_ANON_KEY is missing in environment variables.');
   }
 
+  const isValidUrl = supabaseUrl && (supabaseUrl.startsWith('http://') || supabaseUrl.startsWith('https://'));
+  const finalUrl = isValidUrl ? supabaseUrl : 'https://placeholder.com';
+
   const supabaseClient = createServerClient(
-    supabaseUrl || '',
-    supabaseAnonKey || '',
+    finalUrl,
+    supabaseAnonKey || 'placeholder-key',
     {
       cookies: {
         getAll() {

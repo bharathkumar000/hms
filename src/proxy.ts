@@ -67,6 +67,32 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/patient/dashboard', request.url))
   }
 
+  // Protect /doctor/* routes (except /doctor/login)
+  const isDoctorRoute = request.nextUrl.pathname.startsWith('/doctor') && !request.nextUrl.pathname.startsWith('/doctor/login')
+  
+  if (isDoctorRoute && !user) {
+    // Redirect unauthenticated users to the doctor login page
+    return NextResponse.redirect(new URL('/doctor/login', request.url))
+  }
+
+  // Redirect logged in users away from the login page
+  if (user && request.nextUrl.pathname === '/doctor/login') {
+    return NextResponse.redirect(new URL('/doctor/dashboard', request.url))
+  }
+
+  // Protect /reception/* routes (except /reception/login)
+  const isReceptionRoute = request.nextUrl.pathname.startsWith('/reception') && !request.nextUrl.pathname.startsWith('/reception/login')
+  
+  if (isReceptionRoute && !user) {
+    // Redirect unauthenticated users to the reception login page
+    return NextResponse.redirect(new URL('/reception/login', request.url))
+  }
+
+  // Redirect logged in users away from the login page
+  if (user && request.nextUrl.pathname === '/reception/login') {
+    return NextResponse.redirect(new URL('/reception/dashboard', request.url))
+  }
+
   return supabaseResponse
 }
 

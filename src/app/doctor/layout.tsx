@@ -1,17 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import {
-  Hospital,
-  LayoutDashboard,
-  UserRound,
-  CalendarCheck,
-  FileText,
-  Pill,
-  CreditCard,
-  Bell,
+import { 
+  Stethoscope, 
+  LayoutDashboard, 
+  Calendar,
+  MessageSquare,
+  AlertCircle,
+  Users,
+  FileSignature,
+  Microscope,
+  BarChart,
   Settings,
   LogOut
 } from 'lucide-react';
@@ -19,17 +20,18 @@ import { createClient } from '@/utils/supabase/client';
 import styles from './layout.module.css';
 
 const navItems = [
-  { name: 'Dashboard', href: '/patient/dashboard', icon: LayoutDashboard },
-  { name: 'Profile', href: '/patient/profile', icon: UserRound },
-  { name: 'Appointments', href: '/patient/appointments', icon: CalendarCheck },
-  { name: 'Medical Records', href: '/patient/records', icon: FileText },
-  { name: 'Prescription', href: '/patient/Prescription', icon: Pill },
-  { name: 'Billing', href: '/patient/billing', icon: CreditCard },
-  { name: 'Notifications', href: '/patient/notifications', icon: Bell },
-  { name: 'Settings', href: '/patient/settings', icon: Settings },
+  { name: 'Dashboard', href: '/doctor/dashboard', icon: LayoutDashboard },
+  { name: 'Schedule', href: '/doctor/schedule', icon: Calendar },
+  { name: 'Consultations', href: '/doctor/consultations', icon: MessageSquare },
+  { name: 'Emergencies', href: '/doctor/emergencies', icon: AlertCircle },
+  { name: 'Patients', href: '/doctor/patients', icon: Users },
+  { name: 'Prescriptions', href: '/doctor/prescriptions', icon: FileSignature },
+  { name: 'Lab Reports', href: '/doctor/lab', icon: Microscope },
+  { name: 'Reports', href: '/doctor/reports', icon: BarChart },
+  { name: 'Settings', href: '/doctor/settings', icon: Settings },
 ];
 
-export default function PatientLayout({ children }: { children: React.ReactNode }) {
+export default function DoctorLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
@@ -39,32 +41,32 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
     setLoading(true);
     // Clear demo auth cookie
     document.cookie = 'demo_auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-
+    
     // Call Supabase signout (will safely fail or do nothing if unconfigured)
     try {
       await supabase.auth.signOut();
     } catch (e) {
       // ignore
     }
-    router.push('/patient/login');
+    router.push('/doctor/login');
   };
 
   return (
     <div className={styles.layout}>
       <aside className={styles.sidebar}>
         <div className={styles.logo}>
-          <Hospital size={28} color="var(--color-primary)" />
-          <span>Patient Portal</span>
+          <Stethoscope size={28} color="var(--color-primary)" />
+          <span>Doctor Portal</span>
         </div>
-
+        
         <nav className={styles.nav}>
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname.startsWith(item.href);
-
+            
             return (
-              <Link
-                key={item.name}
+              <Link 
+                key={item.name} 
                 href={item.href}
                 className={`${styles.navItem} ${isActive ? styles.navItemActive : ''}`}
               >
@@ -75,8 +77,8 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
           })}
         </nav>
 
-        <button
-          onClick={handleLogout}
+        <button 
+          onClick={handleLogout} 
           className={styles.logoutBtn}
           disabled={loading}
         >
