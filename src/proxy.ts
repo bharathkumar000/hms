@@ -115,6 +115,17 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/pharmacy/dashboard', request.url))
   }
 
+  // Protect /admin/* routes (except /admin/login)
+  const isAdminRoute = request.nextUrl.pathname.startsWith('/admin') && !request.nextUrl.pathname.startsWith('/admin/login')
+  
+  if (isAdminRoute && !user) {
+    return NextResponse.redirect(new URL('/admin/login', request.url))
+  }
+
+  if (user && request.nextUrl.pathname === '/admin/login') {
+    return NextResponse.redirect(new URL('/admin/dashboard', request.url))
+  }
+
   return supabaseResponse
 }
 

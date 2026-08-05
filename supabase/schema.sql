@@ -426,3 +426,71 @@ CREATE POLICY "Pharmacist full access prescriptions" ON public.prescriptions FOR
 CREATE POLICY "Pharmacist view profiles" ON public.profiles FOR SELECT USING (true);
 CREATE POLICY "Pharmacist full access bills" ON public.bills FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Pharmacist full access payments" ON public.payments FOR ALL USING (true) WITH CHECK (true);
+
+-- --------------------------------------------------------
+-- ADMIN PORTAL TABLES
+-- --------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS public.admins (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.departments (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL UNIQUE,
+  description TEXT,
+  head_doctor_id UUID REFERENCES public.doctors(id) ON DELETE SET NULL,
+  status TEXT DEFAULT 'Active', -- Active, Inactive
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.equipment (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  category TEXT,
+  department TEXT,
+  status TEXT DEFAULT 'Operational', -- Operational, Maintenance, Faulty
+  maintenance_schedule DATE,
+  location TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.audit_logs (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  action TEXT NOT NULL,
+  entity_type TEXT NOT NULL, -- e.g., 'Profile', 'Appointment'
+  entity_id TEXT,
+  details TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.system_logs (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  event_type TEXT NOT NULL, -- Auth, Database, API, Security
+  message TEXT NOT NULL,
+  error_details TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Enable RLS for Admin tables
+ALTER TABLE public.admins ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.departments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.equipment ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.system_logs ENABLE ROW LEVEL SECURITY;
+
+-- Admins get full access to EVERYTHING. For demo, we just allow anyone to do anything on these tables to keep it simple, 
+-- but in reality we would use auth.uid() matching an admin record. 
+-- Since we are doing a demo where any logged in user can potentially be an admin if they use the admin portal login,
+-- we'll allow all authenticated users (or just true) for these new tables.
+CREATE POLICY "Admins full access admins" ON public.admins FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Admins full access departments" ON public.departments FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Admins full access equipment" ON public.equipment FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Admins full access audit_logs" ON public.audit_logs FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Admins full access system_logs" ON public.system_logs FOR ALL USING (true) WITH CHECK (true);
