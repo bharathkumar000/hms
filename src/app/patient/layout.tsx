@@ -46,7 +46,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
     } catch (e) {
       // ignore
     }
-    router.push('/patient/login');
+    router.push('/');
   };
 
   return (

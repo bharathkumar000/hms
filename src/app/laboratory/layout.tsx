@@ -47,7 +47,7 @@ export default function LaboratoryLayout({ children }: { children: React.ReactNo
     } catch (e) {
       // ignore
     }
-    router.push('/laboratory/login');
+    router.push('/');
   };
 
   return (

@@ -36,7 +36,7 @@ export default function PharmacyLayout({
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push('/pharmacy/login');
+    router.push('/');
   };
 
   const navItems = [

@@ -41,6 +41,14 @@ export default async function proxy(request: NextRequest) {
     }
   )
 
+  // OPTIMIZATION: Only run auth checks for portal routes to make navigation faster
+  const portalRoutes = ['/patient', '/doctor', '/reception', '/laboratory', '/pharmacy', '/admin'];
+  const isPortalRoute = portalRoutes.some(route => request.nextUrl.pathname.startsWith(route));
+
+  if (!isPortalRoute) {
+    return supabaseResponse;
+  }
+
   // DEMO AUTHENTICATION LAYER
   const demoAuthCookie = request.cookies.get('demo_auth')?.value;
   let user = null;
@@ -49,9 +57,10 @@ export default async function proxy(request: NextRequest) {
     user = { id: 'demo-user-id', role: demoAuthCookie };
   } else {
     // Refresh session if expired - required for Server Components
-    // https://supabase.com/docs/guides/auth/server-side/nextjs
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
+    // Using getSession() instead of getUser() in middleware for significantly faster navigation
+    // (no network roundtrip on every page load). 
+    const { data } = await supabase.auth.getSession();
+    user = data.session?.user;
   }
 
   // Protect /patient/* routes (except /patient/login)

@@ -43,7 +43,7 @@ export default function ReceptionLayout({ children }: { children: React.ReactNod
     } catch (e) {
       // ignore
     }
-    router.push('/reception/login');
+    router.push('/');
   };
 
   return (
