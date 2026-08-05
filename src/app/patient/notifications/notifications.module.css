@@ -1,0 +1,83 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 800px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.card {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 0;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.notifList {
+  display: flex;
+  flex-direction: column;
+}
+
+.notifItem {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: background-color 0.2s;
+}
+
+.notifItem:last-child {
+  border-bottom: none;
+}
+
+.notifUnread {
+  background-color: rgba(41, 92, 255, 0.03);
+  border-left: 4px solid var(--color-primary);
+}
+
+.notifHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.notifTitle {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-size: 1.1rem;
+}
+
+.notifDate {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.notifMessage {
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.notifType {
+  align-self: flex-start;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  background-color: var(--color-light);
+  color: var(--color-primary);
+  border-radius: 4px;
+  font-weight: 600;
+  margin-top: 0.25rem;
+}

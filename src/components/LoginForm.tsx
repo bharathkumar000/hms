@@ -4,7 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
-import { supabase } from '@/utils/supabase/client';
+import { createClient } from '@/utils/supabase/client';
+import { DEMO_USERS } from '@/utils/demoAuth';
 import styles from './LoginForm.module.css';
 
 interface LoginFormProps {
@@ -42,9 +43,31 @@ export default function LoginForm({ portalName, placeholder, moduleKey }: LoginF
     setIsLoading(true);
     
     try {
-      // Assuming Login ID is used as email for Supabase by default,
-      // If a real system uses UHID or Employee ID, you would map it here 
-      // or use a custom Supabase auth endpoint. We use email here as fallback.
+      // DEMO AUTHENTICATION LOGIC
+      // This is a temporary layer that checks predefined credentials
+      const demoUser = DEMO_USERS[moduleKey as keyof typeof DEMO_USERS];
+      
+      if (demoUser && loginId === demoUser.id && password === demoUser.pass) {
+        // Set a cookie that will be valid for this session
+        document.cookie = `demo_auth=${moduleKey}; path=/; max-age=86400`; // 1 day
+        
+        // Brief success indication (optional, UI remains exactly the same)
+        // Redirect to dashboard
+        router.push(`/${moduleKey}/dashboard`);
+        return;
+      } else {
+        setGeneralError('Invalid Login ID or Password.');
+        return;
+      }
+      
+      /* 
+      // === ORIGINAL SUPABASE LOGIC (Kept intact for future migration) ===
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        setGeneralError('Supabase is not configured. Please add credentials to .env.local');
+        return;
+      }
+
+      const supabase = createClient();
       const { data, error } = await supabase.auth.signInWithPassword({
         email: loginId,
         password: password,
@@ -53,11 +76,11 @@ export default function LoginForm({ portalName, placeholder, moduleKey }: LoginF
       if (error) {
         setGeneralError('Invalid credentials. Please try again.');
       } else if (data.user) {
-        // Successful login, redirect to respective dashboard
         router.push(`/${moduleKey}/dashboard`);
       }
-    } catch (err) {
-      setGeneralError('An unexpected error occurred. Please try again.');
+      */
+    } catch (err: any) {
+      setGeneralError(err.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }

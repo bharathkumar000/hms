@@ -1,6 +1,19 @@
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder';
+export function createClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  if (!supabaseUrl) {
+    console.error('Error: NEXT_PUBLIC_SUPABASE_URL is missing in environment variables.');
+  }
+  
+  if (!supabaseAnonKey) {
+    console.error('Error: NEXT_PUBLIC_SUPABASE_ANON_KEY is missing in environment variables.');
+  }
+
+  return createBrowserClient(
+    supabaseUrl || '',
+    supabaseAnonKey || ''
+  )
+}
