@@ -1,0 +1,33 @@
+.deptGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-top: 3rem;
+}
+
+.deptCard {
+  background-color: white;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+  color: var(--color-text-primary);
+}
+
+.deptCard:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background-color: var(--color-light);
+  transform: translateY(-2px);
+}
+
+.deptName {
+  font-weight: 600;
+  font-size: 1.05rem;
+}
