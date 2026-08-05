@@ -81,6 +81,13 @@ CREATE TABLE IF NOT EXISTS public.prescriptions (
   frequency TEXT NOT NULL,
   duration TEXT NOT NULL,
   status TEXT DEFAULT 'Active', -- Active, Completed
+  
+  -- Pharmacy tracking fields
+  dispense_status TEXT DEFAULT 'Pending', -- Pending, Partially Dispensed, Completed
+  dispensed_quantity INTEGER DEFAULT 0,
+  pharmacist_id UUID, -- Will reference pharmacists table
+  dispense_date TIMESTAMP WITH TIME ZONE,
+  
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -91,6 +98,7 @@ CREATE TABLE IF NOT EXISTS public.bills (
   appointment_id UUID REFERENCES public.appointments(id) ON DELETE SET NULL,
   amount DECIMAL(10, 2) NOT NULL,
   description TEXT,
+  bill_type TEXT DEFAULT 'General', -- General, Pharmacy
   status TEXT DEFAULT 'Pending', -- Pending, Paid
   due_date DATE,
   invoice_url TEXT,
@@ -120,14 +128,37 @@ CREATE TABLE IF NOT EXISTS public.notifications (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Lab Orders table
+-- Laboratory Staff table
+CREATE TABLE IF NOT EXISTS public.lab_staff (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  phone_number TEXT,
+  email TEXT,
+  role TEXT DEFAULT 'Technician', -- Technician, Pathologist
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Lab Orders table (Expanded for Laboratory Portal)
 CREATE TABLE IF NOT EXISTS public.lab_orders (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   patient_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
   doctor_id UUID REFERENCES public.doctors(id) ON DELETE SET NULL,
   test_category TEXT NOT NULL,
   notes TEXT,
-  status TEXT DEFAULT 'Pending', -- Pending, Completed, Cancelled
+  
+  -- Laboratory fields
+  technician_id UUID REFERENCES public.lab_staff(id) ON DELETE SET NULL,
+  sample_id TEXT,
+  collection_time TIMESTAMP WITH TIME ZONE,
+  processing_start_time TIMESTAMP WITH TIME ZONE,
+  completion_time TIMESTAMP WITH TIME ZONE,
+  report_url TEXT,
+  report_status TEXT DEFAULT 'Pending', -- Draft, Approved, Released
+  urgent BOOLEAN DEFAULT false,
+  
+  status TEXT DEFAULT 'Pending', -- Pending, Sample Requested, Sample Collected, Sample Received, Processing, Completed, Report Ready, Released, Cancelled
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -237,6 +268,7 @@ ALTER TABLE public.doctor_availability ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.leave_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reception_staff ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.patient_queue ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.lab_staff ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for Doctors
 -- In a real app, doctors would only access their own assigned patients.
@@ -276,3 +308,121 @@ CREATE POLICY "Reception staff full access bills" ON public.bills FOR ALL USING 
 CREATE POLICY "Reception staff full access payments" ON public.payments FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Reception staff view own profile" ON public.reception_staff FOR SELECT USING (true);
 CREATE POLICY "Reception staff update own profile" ON public.reception_staff FOR UPDATE USING (auth.uid() = user_id);
+
+-- RLS Policies for Laboratory Staff
+CREATE POLICY "Lab staff full access lab_orders" ON public.lab_orders FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Lab staff view profiles" ON public.profiles FOR SELECT USING (true);
+CREATE POLICY "Lab staff view doctors" ON public.doctors FOR SELECT USING (true);
+CREATE POLICY "Lab staff full access documents" ON public.documents FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Lab staff view own profile" ON public.lab_staff FOR SELECT USING (true);
+CREATE POLICY "Lab staff update own profile" ON public.lab_staff FOR UPDATE USING (auth.uid() = user_id);
+
+-- --------------------------------------------------------
+-- PHARMACY PORTAL TABLES
+-- --------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS public.pharmacists (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  phone_number TEXT,
+  email TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Note: We add foreign key constraint here to avoid circular dependency above
+ALTER TABLE public.prescriptions 
+  ADD CONSTRAINT fk_pharmacist FOREIGN KEY (pharmacist_id) REFERENCES public.pharmacists(id) ON DELETE SET NULL;
+
+CREATE TABLE IF NOT EXISTS public.medicines (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  category TEXT,
+  manufacturer TEXT,
+  description TEXT,
+  price_per_unit DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  minimum_stock_level INTEGER DEFAULT 10,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.suppliers (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  contact_person TEXT,
+  phone TEXT,
+  email TEXT,
+  address TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.medicine_batches (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  medicine_id UUID REFERENCES public.medicines(id) ON DELETE CASCADE NOT NULL,
+  supplier_id UUID REFERENCES public.suppliers(id) ON DELETE SET NULL,
+  batch_number TEXT NOT NULL,
+  quantity INTEGER NOT NULL DEFAULT 0,
+  expiry_date DATE NOT NULL,
+  manufacture_date DATE,
+  location TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.stock_transactions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  medicine_id UUID REFERENCES public.medicines(id) ON DELETE CASCADE NOT NULL,
+  batch_id UUID REFERENCES public.medicine_batches(id) ON DELETE CASCADE,
+  transaction_type TEXT NOT NULL, -- IN, OUT
+  quantity INTEGER NOT NULL,
+  reference_type TEXT, -- Prescription, Purchase Order, Manual
+  reference_id TEXT, -- Prescription ID or PO ID
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.purchase_orders (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  supplier_id UUID REFERENCES public.suppliers(id) ON DELETE SET NULL,
+  status TEXT DEFAULT 'Pending', -- Pending, Approved, Received, Cancelled
+  total_amount DECIMAL(10, 2) DEFAULT 0,
+  order_date DATE DEFAULT CURRENT_DATE,
+  delivery_date DATE,
+  invoice_number TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.purchase_order_items (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  order_id UUID REFERENCES public.purchase_orders(id) ON DELETE CASCADE NOT NULL,
+  medicine_id UUID REFERENCES public.medicines(id) ON DELETE CASCADE NOT NULL,
+  quantity INTEGER NOT NULL,
+  unit_price DECIMAL(10, 2) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Enable RLS for Pharmacy tables
+ALTER TABLE public.pharmacists ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.medicines ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.suppliers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.medicine_batches ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.stock_transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.purchase_orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.purchase_order_items ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for Pharmacists
+-- Pharmacists have full access to pharmacy modules
+CREATE POLICY "Pharmacist view own profile" ON public.pharmacists FOR SELECT USING (true);
+CREATE POLICY "Pharmacist update own profile" ON public.pharmacists FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Pharmacist full access medicines" ON public.medicines FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Pharmacist full access suppliers" ON public.suppliers FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Pharmacist full access batches" ON public.medicine_batches FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Pharmacist full access transactions" ON public.stock_transactions FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Pharmacist full access purchase orders" ON public.purchase_orders FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Pharmacist full access po items" ON public.purchase_order_items FOR ALL USING (true) WITH CHECK (true);
+
+-- Pharmacists need access to prescriptions and profiles
+CREATE POLICY "Pharmacist full access prescriptions" ON public.prescriptions FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Pharmacist view profiles" ON public.profiles FOR SELECT USING (true);
+CREATE POLICY "Pharmacist full access bills" ON public.bills FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Pharmacist full access payments" ON public.payments FOR ALL USING (true) WITH CHECK (true);

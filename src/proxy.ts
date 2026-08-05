@@ -93,6 +93,28 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/reception/dashboard', request.url))
   }
 
+  // Protect /laboratory/* routes (except /laboratory/login)
+  const isLaboratoryRoute = request.nextUrl.pathname.startsWith('/laboratory') && !request.nextUrl.pathname.startsWith('/laboratory/login')
+  
+  if (isLaboratoryRoute && !user) {
+    return NextResponse.redirect(new URL('/laboratory/login', request.url))
+  }
+
+  if (user && request.nextUrl.pathname === '/laboratory/login') {
+    return NextResponse.redirect(new URL('/laboratory/dashboard', request.url))
+  }
+
+  // Protect /pharmacy/* routes (except /pharmacy/login)
+  const isPharmacyRoute = request.nextUrl.pathname.startsWith('/pharmacy') && !request.nextUrl.pathname.startsWith('/pharmacy/login')
+  
+  if (isPharmacyRoute && !user) {
+    return NextResponse.redirect(new URL('/pharmacy/login', request.url))
+  }
+
+  if (user && request.nextUrl.pathname === '/pharmacy/login') {
+    return NextResponse.redirect(new URL('/pharmacy/dashboard', request.url))
+  }
+
   return supabaseResponse
 }
 
