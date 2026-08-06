@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { Plus, Minus, ShoppingCart, Clock, CheckCircle } from 'lucide-react';
+import { useModal } from '@/components/ModalProvider';
 import styles from './canteen.module.css';
 
 export default function CanteenClient({
@@ -18,6 +19,7 @@ export default function CanteenClient({
   const [cart, setCart] = useState<any[]>([]);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [orders, setOrders] = useState(previousOrders);
+  const { showAlert } = useModal();
 
   const supabase = createClient();
 
@@ -95,10 +97,10 @@ export default function CanteenClient({
       
       setOrders([newOrder, ...orders]);
       setCart([]);
-      alert('Order placed successfully!');
+      showAlert('Order placed successfully!');
     } catch (error) {
       console.error('Error placing order:', error);
-      alert('Failed to place order. Please try again.');
+      showAlert('Failed to place order. Please try again.');
     } finally {
       setIsPlacingOrder(false);
     }
