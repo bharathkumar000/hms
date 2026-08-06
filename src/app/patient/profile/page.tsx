@@ -63,7 +63,7 @@ export default function ProfilePage() {
       // Fallback if state was lost
       if (!activeUserId) {
         const { data: { session } } = await supabase.auth.getSession();
-        activeUserId = session?.user?.id || (await supabase.auth.getUser()).data.user?.id;
+        activeUserId = session?.user?.id || (await supabase.auth.getUser()).data.user?.id || null;
       }
       
       if (!activeUserId) {

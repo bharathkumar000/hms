@@ -95,7 +95,7 @@ export default function AppointmentsPage() {
       let uid = activeUserId;
       if (!uid) {
         const { data: { session } } = await supabase.auth.getSession();
-        uid = session?.user?.id || (await supabase.auth.getUser()).data.user?.id;
+        uid = session?.user?.id || (await supabase.auth.getUser()).data.user?.id || null;
       }
       
       if (!uid) {
@@ -106,29 +106,50 @@ export default function AppointmentsPage() {
       
       if (doctorId && date && time) {
         // First ensure the user has a profile, as appointments table references it
-        const { data: profile } = await supabase.from('profiles').select('id').eq('id', uid).single();
-        if (!profile) {
-          showAlert('Please complete and save your Profile first before booking an appointment.');
-          setIsSubmitting(false);
-          return;
+        if (uid !== 'demo-user-id') {
+          const { data: profile } = await supabase.from('profiles').select('id').eq('id', uid).single();
+          if (!profile) {
+            showAlert('Please complete and save your Profile first before booking an appointment.');
+            setIsSubmitting(false);
+            return;
+          }
         }
 
         if (uid === 'demo-user-id') {
-          // Simulate Demo Booking in Local Storage to avoid PostgreSQL UUID & RLS errors
           const selectedDoc = doctors.find(d => d.id === doctorId);
-          const newApt = {
-            id: 'demo-apt-' + Date.now(),
-            patient_id: uid,
-            doctor_id: doctorId,
-            appointment_date: date,
-            appointment_time: time,
-            reason_for_visit: reason,
-            status: 'Upcoming',
-            doctors: selectedDoc
-          };
+          let existing = JSON.parse(localStorage.getItem('demo_appointments') || '[]');
           
-          const existing = JSON.parse(localStorage.getItem('demo_appointments') || '[]');
-          localStorage.setItem('demo_appointments', JSON.stringify([newApt, ...existing]));
+          if (isRescheduling) {
+            // Update existing demo appointment
+            existing = existing.map((apt: any) => {
+              if (apt.id === isRescheduling) {
+                return {
+                  ...apt,
+                  doctor_id: doctorId,
+                  appointment_date: date,
+                  appointment_time: time,
+                  reason_for_visit: reason,
+                  doctors: selectedDoc
+                };
+              }
+              return apt;
+            });
+          } else {
+            // Create new demo appointment
+            const newApt = {
+              id: 'demo-apt-' + Date.now(),
+              patient_id: uid,
+              doctor_id: doctorId,
+              appointment_date: date,
+              appointment_time: time,
+              reason_for_visit: reason,
+              status: 'Upcoming',
+              doctors: selectedDoc
+            };
+            existing = [newApt, ...existing];
+          }
+          
+          localStorage.setItem('demo_appointments', JSON.stringify(existing));
           
           setIsModalOpen(false);
           setIsRescheduling(null);
@@ -211,10 +232,19 @@ export default function AppointmentsPage() {
 
   const handleCancel = async (id: string) => {
     if (await showConfirm('Are you sure you want to cancel this appointment?')) {
-      await supabase
-        .from('appointments')
-        .update({ status: 'Cancelled' })
-        .eq('id', id);
+      if (id.startsWith('demo-apt-')) {
+        let existing = JSON.parse(localStorage.getItem('demo_appointments') || '[]');
+        existing = existing.map((apt: any) => {
+          if (apt.id === id) return { ...apt, status: 'Cancelled' };
+          return apt;
+        });
+        localStorage.setItem('demo_appointments', JSON.stringify(existing));
+      } else {
+        await supabase
+          .from('appointments')
+          .update({ status: 'Cancelled' })
+          .eq('id', id);
+      }
       fetchAppointments();
     }
   };

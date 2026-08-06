@@ -73,7 +73,7 @@ export default function ReceptionAppointments() {
     e.preventDefault();
     setSubmitting(true);
 
-    const { error } = await supabase.from('appointments').insert({
+    const { data, error } = await supabase.from('appointments').insert({
       patient_id: patientId,
       doctor_id: doctorId,
       appointment_date: date,

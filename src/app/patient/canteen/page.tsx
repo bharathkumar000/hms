@@ -26,7 +26,8 @@ export default async function CanteenPage() {
 
   let deliveryLocation = 'Self Pickup / OP Visit';
   if (admission && admission.beds) {
-    deliveryLocation = `${admission.beds.rooms?.wards?.name} - Room ${admission.beds.rooms?.room_number}, Bed ${admission.beds.bed_number}`;
+    const beds = admission.beds as any;
+    deliveryLocation = `${beds.rooms?.wards?.name} - Room ${beds.rooms?.room_number}, Bed ${beds.bed_number}`;
   }
 
   // Fetch food categories and menu items
