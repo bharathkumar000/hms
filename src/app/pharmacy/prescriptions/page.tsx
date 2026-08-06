@@ -211,7 +211,8 @@ export default function PharmacyPrescriptions() {
             <form onSubmit={handleDispense}>
               <div className={styles.formGroup}>
                 <label>Select Medicine & Batch from Inventory to Deduct</label>
-                <select required value={selectedBatchId} onChange={e => setSelectedBatchId(e.target.value)}>
+                <select required className={styles.input} value={selectedBatchId} onChange={e => setSelectedBatchId(e.target.value)}>
+                  <option value="" disabled>-- Select Medicine Batch --</option>
                   {inventory.map(b => (
                     <option key={b.id} value={b.id}>
                       {b.medicines?.name} - Batch {b.batch_number} (Stock: {b.quantity}, Exp: {new Date(b.expiry_date).toLocaleDateString()})

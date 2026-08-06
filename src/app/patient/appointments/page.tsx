@@ -47,7 +47,14 @@ export default function AppointmentsPage() {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (user && doctorId && date && time) {
-      await supabase.from('appointments').insert({
+      // First ensure the user has a profile, as appointments table references it
+      const { data: profile } = await supabase.from('profiles').select('id').eq('id', user.id).single();
+      if (!profile) {
+        showAlert('Please complete and save your Profile first before booking an appointment.');
+        return;
+      }
+
+      const { error } = await supabase.from('appointments').insert({
         patient_id: user.id,
         doctor_id: doctorId,
         appointment_date: date,
@@ -55,6 +62,13 @@ export default function AppointmentsPage() {
         reason_for_visit: reason,
         status: 'Upcoming'
       });
+      
+      if (error) {
+        console.error('Error booking appointment:', error);
+        showAlert(`Error booking appointment: ${error.message}`);
+        return;
+      }
+      
       setIsModalOpen(false);
       setDoctorId('');
       setDate('');

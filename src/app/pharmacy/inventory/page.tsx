@@ -13,6 +13,7 @@ export default function PharmacyInventory() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   
   // Form State
   const [formData, setFormData] = useState({
@@ -54,19 +55,43 @@ export default function PharmacyInventory() {
     setLoading(false);
   };
 
-  const handleAddMedicine = async (e: React.FormEvent) => {
+  const handleSaveMedicine = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await supabase
-      .from('medicines')
-      .insert([formData]);
+    let error;
+
+    if (editingId) {
+      const { error: updateError } = await supabase
+        .from('medicines')
+        .update(formData)
+        .eq('id', editingId);
+      error = updateError;
+    } else {
+      const { error: insertError } = await supabase
+        .from('medicines')
+        .insert([formData]);
+      error = insertError;
+    }
     
     if (!error) {
       setShowModal(false);
+      setEditingId(null);
       setFormData({ name: '', category: 'Tablet', manufacturer: '', price_per_unit: 0, minimum_stock_level: 10 });
       fetchInventory();
     } else {
-      showAlert('Error adding medicine: ' + error.message);
+      showAlert('Error saving medicine: ' + error.message);
     }
+  };
+
+  const handleEditMedicine = (med: any) => {
+    setEditingId(med.id);
+    setFormData({
+      name: med.name,
+      category: med.category,
+      manufacturer: med.manufacturer,
+      price_per_unit: med.price_per_unit,
+      minimum_stock_level: med.minimum_stock_level
+    });
+    setShowModal(true);
   };
 
   const getStockBadge = (stock: number, minStock: number) => {
@@ -83,7 +108,11 @@ export default function PharmacyInventory() {
           <p className={styles.details}>Manage medicine catalog and stock levels.</p>
         </div>
         <div className={styles.actions}>
-          <button className={styles.btnPrimary} onClick={() => setShowModal(true)}>
+          <button className={styles.btnPrimary} onClick={() => {
+            setEditingId(null);
+            setFormData({ name: '', category: 'Tablet', manufacturer: '', price_per_unit: 0, minimum_stock_level: 10 });
+            setShowModal(true);
+          }}>
             <Plus size={20} /> Add Medicine
           </button>
         </div>
@@ -129,7 +158,12 @@ export default function PharmacyInventory() {
                     <td style={{ fontWeight: 700 }}>{med.totalStock}</td>
                     <td>{getStockBadge(med.totalStock, med.minimum_stock_level)}</td>
                     <td>
-                      <button className={styles.btnOutline} style={{ padding: '0.5rem', display: 'flex' }} title="Edit Medicine">
+                      <button 
+                        className={styles.btnOutline} 
+                        style={{ padding: '0.5rem', display: 'flex' }} 
+                        title="Edit Medicine"
+                        onClick={() => handleEditMedicine(med)}
+                      >
                         <Edit2 size={16} />
                       </button>
                     </td>
@@ -151,8 +185,8 @@ export default function PharmacyInventory() {
       {showModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
-            <h2 style={{ marginBottom: '1.5rem' }}>Add New Medicine</h2>
-            <form onSubmit={handleAddMedicine}>
+            <h2 style={{ marginBottom: '1.5rem' }}>{editingId ? 'Edit Medicine' : 'Add New Medicine'}</h2>
+            <form onSubmit={handleSaveMedicine}>
               <div className={styles.formGroup}>
                 <label>Medicine Name</label>
                 <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
@@ -179,7 +213,7 @@ export default function PharmacyInventory() {
               <div style={{ display: 'flex', gap: '1rem' }}>
                 <div className={styles.formGroup} style={{ flex: 1 }}>
                   <label>Price Per Unit (₹)</label>
-                  <input required type="number" step="0.01" min="0" value={formData.price_per_unit} onChange={e => setFormData({...formData, price_per_unit: parseFloat(e.target.value)})} />
+                  <input required type="number" step="0.01" min="0" value={formData.price_per_unit === 0 ? '' : formData.price_per_unit} onChange={e => setFormData({...formData, price_per_unit: e.target.value ? parseFloat(e.target.value) : 0})} />
                 </div>
                 <div className={styles.formGroup} style={{ flex: 1 }}>
                   <label>Min Stock Alert Level</label>

@@ -3,7 +3,7 @@ import { useModal } from '@/components/ModalProvider';
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import { Plus, Search, Building2, Phone, Mail } from 'lucide-react';
+import { Plus, Search, Building2, Phone, Mail, Trash2 } from 'lucide-react';
 import styles from '../inventory/inventory.module.css'; // Reusing inventory CSS
 
 export default function PharmacySuppliers() {
@@ -55,6 +55,17 @@ export default function PharmacySuppliers() {
     }
   };
 
+  const handleDeleteSupplier = async (id: string, name: string) => {
+    if (await showConfirm(`Are you sure you want to delete supplier "${name}"? This action cannot be undone.`)) {
+      const { error } = await supabase.from('suppliers').delete().eq('id', id);
+      if (error) {
+        showAlert('Error deleting supplier: ' + error.message);
+      } else {
+        fetchSuppliers();
+      }
+    }
+  };
+
   return (
     <div className={styles.container}>
       <header className={styles.header}>
@@ -88,8 +99,17 @@ export default function PharmacySuppliers() {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
             {suppliers.map((supplier) => (
-              <div key={supplier.id} style={{ border: '1px solid var(--color-border)', borderRadius: '12px', padding: '1.5rem', backgroundColor: 'var(--color-card-bg)' }}>
-                <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div key={supplier.id} style={{ border: '1px solid var(--color-border)', borderRadius: '12px', padding: '1.5rem', backgroundColor: 'var(--color-card-bg)', position: 'relative' }}>
+                <div style={{ position: 'absolute', top: '1rem', right: '1rem' }}>
+                  <button 
+                    onClick={() => handleDeleteSupplier(supplier.id, supplier.name)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)' }}
+                    title="Delete Supplier"
+                  >
+                    <Trash2 size={18} color="#ef4444" />
+                  </button>
+                </div>
+                <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', paddingRight: '2rem' }}>
                   <Building2 size={20} color="var(--color-primary)" /> {supplier.name}
                 </h3>
                 <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1rem', fontSize: '0.9rem' }}>

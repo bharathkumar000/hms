@@ -60,12 +60,23 @@ export default function ProfilePage() {
         .from('profiles')
         .upsert({ 
           id: user.id, 
-          ...profile,
+          first_name: profile.first_name,
+          last_name: profile.last_name,
+          date_of_birth: profile.date_of_birth || null,
+          gender: profile.gender || null,
+          phone_number: profile.phone_number,
+          address: profile.address,
+          emergency_contact_name: profile.emergency_contact_name,
+          emergency_contact_phone: profile.emergency_contact_phone,
+          blood_group: profile.blood_group,
+          insurance_provider: profile.insurance_provider,
+          insurance_policy_number: profile.insurance_policy_number,
           updated_at: new Date().toISOString()
         });
         
       if (error) {
-        setMessage({ text: 'Error updating profile. Please try again.', type: 'error' });
+        console.error('Profile save error:', error);
+        setMessage({ text: `Error updating profile: ${error.message}`, type: 'error' });
       } else {
         setMessage({ text: 'Profile updated successfully!', type: 'success' });
       }

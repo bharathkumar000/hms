@@ -23,7 +23,7 @@ const navItems = [
   { name: 'Profile', href: '/patient/profile', icon: UserRound },
   { name: 'Appointments', href: '/patient/appointments', icon: CalendarCheck },
   { name: 'Medical Records', href: '/patient/records', icon: FileText },
-  { name: 'Prescription', href: '/patient/Prescription', icon: Pill },
+  { name: 'Prescription', href: '/patient/pharmacy', icon: Pill },
   { name: 'Billing', href: '/patient/billing', icon: CreditCard },
   { name: 'Notifications', href: '/patient/notifications', icon: Bell },
   { name: 'Settings', href: '/patient/settings', icon: Settings },
