@@ -65,7 +65,6 @@ export default function AdminLayout({
         </div>
 
         <nav className={styles.nav}>
-          <div className={styles.navGroup}>Core Module</div>
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.path;
@@ -81,7 +80,6 @@ export default function AdminLayout({
             );
           })}
 
-          <div className={styles.navGroup}>Monitoring</div>
           {monitoringItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.path;
@@ -97,7 +95,6 @@ export default function AdminLayout({
             );
           })}
 
-          <div className={styles.navGroup}>System</div>
           {systemItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.path;

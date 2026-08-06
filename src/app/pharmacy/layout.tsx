@@ -70,7 +70,6 @@ export default function PharmacyLayout({
         </div>
 
         <nav className={styles.nav}>
-          <div className={styles.navGroup}>Core Module</div>
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.path;
@@ -86,7 +85,6 @@ export default function PharmacyLayout({
             );
           })}
 
-          <div className={styles.navGroup}>Inventory</div>
           {inventoryItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.path;
@@ -102,7 +100,6 @@ export default function PharmacyLayout({
             );
           })}
 
-          <div className={styles.navGroup}>Finance</div>
           {billingItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.path;
@@ -118,7 +115,6 @@ export default function PharmacyLayout({
             );
           })}
 
-          <div className={styles.navGroup}>System</div>
           {systemItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.path;
