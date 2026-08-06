@@ -94,44 +94,52 @@ export default function FinancialReportsPage() {
         <p>Loading reports...</p>
       ) : (
         <>
-          <div className={styles.metricsGrid}>
-            <div className={styles.metricCard}>
-              <div className={styles.metricIcon} style={{ background: '#ecfdf5', color: '#10b981' }}>
-                <IndianRupee size={24} />
-              </div>
-              <div className={styles.metricInfo}>
-                <h3>Daily Revenue</h3>
-                <p className={styles.metricValue}>₹{metrics.daily.toFixed(2)}</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
+            {/* Revenue Summary Card */}
+            <div className={styles.card} style={{ display: 'flex', flexDirection: 'column' }}>
+              <h2 className={styles.cardTitle} style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+                <TrendingUp size={20} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '8px', color: 'var(--color-primary)' }} />
+                Revenue Breakdown
+              </h2>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--color-background)', borderRadius: '8px', borderLeft: '4px solid #10b981' }}>
+                  <span style={{ fontWeight: 500, color: 'var(--color-text-secondary)' }}>Daily Revenue (Today)</span>
+                  <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>₹{metrics.daily.toFixed(2)}</span>
+                </div>
+                
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--color-background)', borderRadius: '8px', borderLeft: '4px solid #3b82f6' }}>
+                  <span style={{ fontWeight: 500, color: 'var(--color-text-secondary)' }}>Weekly Revenue</span>
+                  <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>₹{metrics.weekly.toFixed(2)}</span>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--color-background)', borderRadius: '8px', borderLeft: '4px solid #a855f7' }}>
+                  <span style={{ fontWeight: 500, color: 'var(--color-text-secondary)' }}>Monthly Revenue</span>
+                  <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>₹{metrics.monthly.toFixed(2)}</span>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--color-background)', borderRadius: '8px', borderLeft: '4px solid #f59e0b' }}>
+                  <span style={{ fontWeight: 500, color: 'var(--color-text-secondary)' }}>Year-to-Date (YTD)</span>
+                  <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>₹{metrics.yearly.toFixed(2)}</span>
+                </div>
               </div>
             </div>
 
-            <div className={styles.metricCard}>
-              <div className={styles.metricIcon} style={{ background: '#eff6ff', color: '#3b82f6' }}>
-                <TrendingUp size={24} />
-              </div>
-              <div className={styles.metricInfo}>
-                <h3>Weekly Revenue</h3>
-                <p className={styles.metricValue}>₹{metrics.weekly.toFixed(2)}</p>
-              </div>
-            </div>
-
-            <div className={styles.metricCard}>
-              <div className={styles.metricIcon} style={{ background: '#f3e8ff', color: '#a855f7' }}>
-                <BarChart3 size={24} />
-              </div>
-              <div className={styles.metricInfo}>
-                <h3>Monthly Revenue</h3>
-                <p className={styles.metricValue}>₹{metrics.monthly.toFixed(2)}</p>
-              </div>
-            </div>
-
-            <div className={styles.metricCard}>
-              <div className={styles.metricIcon} style={{ background: '#fef2f2', color: '#ef4444' }}>
-                <PieChart size={24} />
-              </div>
-              <div className={styles.metricInfo}>
-                <h3>Outstanding Balance</h3>
-                <p className={styles.metricValue}>₹{metrics.totalOutstanding.toFixed(2)}</p>
+            {/* Outstanding & Receivables Card */}
+            <div className={styles.card} style={{ display: 'flex', flexDirection: 'column' }}>
+              <h2 className={styles.cardTitle} style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+                <PieChart size={20} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '8px', color: '#ef4444' }} />
+                Outstanding & Receivables
+              </h2>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', flex: 1, background: '#fef2f2', borderRadius: '12px', padding: '2rem' }}>
+                <IndianRupee size={48} color="#ef4444" style={{ marginBottom: '1rem' }} />
+                <h3 style={{ color: '#ef4444', fontSize: '1.1rem', marginBottom: '0.5rem', fontWeight: 600 }}>Total Outstanding Balance</h3>
+                <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#991b1b' }}>
+                  ₹{metrics.totalOutstanding.toFixed(2)}
+                </div>
+                <p style={{ color: '#b91c1c', marginTop: '1rem', textAlign: 'center', fontSize: '0.9rem' }}>
+                  This amount represents all pending bills that have not yet been fully paid by patients.
+                </p>
               </div>
             </div>
           </div>

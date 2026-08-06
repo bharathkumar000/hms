@@ -156,33 +156,7 @@ export default function BillingDashboard() {
         </div>
       </div>
 
-      <div className={styles.grid}>
-        {/* Quick Actions */}
-        <div className={styles.card}>
-          <h2 className={styles.cardTitle}>Quick Actions</h2>
-          <div className={styles.actionGrid} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginTop: '1.5rem' }}>
-            <Link href="/billing/generate" style={{ textDecoration: 'none' }}>
-              <div style={{ padding: '1.5rem', textAlign: 'center', border: '1px solid var(--color-border)', borderRadius: '12px', cursor: 'pointer', transition: 'all 0.2s ease', backgroundColor: 'var(--color-background)' }} className={styles.quickActionHover}>
-                <Calculator size={32} color="var(--color-primary)" style={{ margin: '0 auto 1rem' }} />
-                <h4 style={{ color: 'var(--color-text-primary)' }}>Create Bill</h4>
-              </div>
-            </Link>
-            
-            <Link href="/billing/reports" style={{ textDecoration: 'none' }}>
-              <div style={{ padding: '1.5rem', textAlign: 'center', border: '1px solid var(--color-border)', borderRadius: '12px', cursor: 'pointer', transition: 'all 0.2s ease', backgroundColor: 'var(--color-background)' }} className={styles.quickActionHover}>
-                <BarChart3 size={32} color="#10b981" style={{ margin: '0 auto 1rem' }} />
-                <h4 style={{ color: 'var(--color-text-primary)' }}>View Reports</h4>
-              </div>
-            </Link>
-            
-            <Link href="/billing/refunds" style={{ textDecoration: 'none' }}>
-              <div style={{ padding: '1.5rem', textAlign: 'center', border: '1px solid var(--color-border)', borderRadius: '12px', cursor: 'pointer', transition: 'all 0.2s ease', backgroundColor: 'var(--color-background)' }} className={styles.quickActionHover}>
-                <Undo2 size={32} color="#f59e0b" style={{ margin: '0 auto 1rem' }} />
-                <h4 style={{ color: 'var(--color-text-primary)' }}>Process Refunds</h4>
-              </div>
-            </Link>
-          </div>
-        </div>
+      <div className={styles.grid} style={{ gridTemplateColumns: '1fr' }}>
 
         {/* Recent Bills */}
         <div className={styles.card}>

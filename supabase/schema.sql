@@ -425,6 +425,7 @@ CREATE TABLE IF NOT EXISTS public.pharmacists (
 );
 
 -- Note: We add foreign key constraint here to avoid circular dependency above
+ALTER TABLE public.prescriptions DROP CONSTRAINT IF EXISTS fk_pharmacist;
 ALTER TABLE public.prescriptions 
   ADD CONSTRAINT fk_pharmacist FOREIGN KEY (pharmacist_id) REFERENCES public.pharmacists(id) ON DELETE SET NULL;
 

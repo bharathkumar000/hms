@@ -10,7 +10,6 @@ import {
   CreditCard, 
   Undo2, 
   BarChart3, 
-  Settings, 
   LogOut
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
@@ -40,16 +39,9 @@ export default function BillingLayout({
     { name: 'Dashboard', path: '/billing/dashboard', icon: LayoutDashboard },
     { name: 'Invoices', path: '/billing/invoices', icon: FileText },
     { name: 'Generate Bill', path: '/billing/generate', icon: Calculator },
-  ];
-
-  const financialItems = [
     { name: 'Payments', path: '/billing/payments', icon: CreditCard },
     { name: 'Refunds', path: '/billing/refunds', icon: Undo2 },
     { name: 'Reports', path: '/billing/reports', icon: BarChart3 },
-  ];
-
-  const systemItems = [
-    { name: 'Settings', path: '/billing/settings', icon: Settings },
   ];
 
   return (
@@ -62,42 +54,6 @@ export default function BillingLayout({
 
         <nav className={styles.nav}>
           {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                href={item.path}
-                className={`${styles.navLink} ${isActive ? styles.activeNavLink : ''}`}
-              >
-                <Icon size={20} />
-                <span>{item.name}</span>
-              </Link>
-            );
-          })}
-
-          <div style={{ margin: '1rem 0 0.5rem 1.5rem', fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Finance
-          </div>
-          {financialItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                href={item.path}
-                className={`${styles.navLink} ${isActive ? styles.activeNavLink : ''}`}
-              >
-                <Icon size={20} />
-                <span>{item.name}</span>
-              </Link>
-            );
-          })}
-
-          <div style={{ margin: '1rem 0 0.5rem 1.5rem', fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            System
-          </div>
-          {systemItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.path;
             return (
