@@ -1,9 +1,11 @@
 'use client';
 
+import Link from 'next/link';
 import Header from '@/components/Header';
 import ModuleCard from '@/components/ModuleCard';
 import styles from './page.module.css';
 import { 
+  ArrowLeft,
   UserRound, 
   Stethoscope, 
   ClipboardList, 
@@ -61,6 +63,10 @@ const modules = [
 export default function Home() {
   return (
     <main className={styles.main}>
+      <Link href="/" style={{ position: 'absolute', top: '2rem', left: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-secondary)', textDecoration: 'none', fontWeight: 500, transition: 'color 0.2s ease', zIndex: 10 }}>
+        <ArrowLeft size={20} />
+        Back to Home
+      </Link>
       <div className={styles.background} />
       <div className={styles.container}>
         <Header />
