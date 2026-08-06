@@ -58,10 +58,10 @@
 }
 
 .btnEmergency {
-  background-color: #fee2e2;
-  color: #dc2626;
-  border: 1px solid transparent;
-  padding: 0.5rem 1rem;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
   border-radius: 8px;
   font-weight: 600;
   font-size: 0.95rem;
@@ -70,10 +70,13 @@
   gap: 0.5rem;
   transition: all 0.2s ease;
   text-decoration: none;
+  box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.2);
 }
 
 .btnEmergency:hover {
-  background-color: #fca5a5;
+  background-color: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 8px -1px rgba(239, 68, 68, 0.3);
 }
 
 .btnPrimary {

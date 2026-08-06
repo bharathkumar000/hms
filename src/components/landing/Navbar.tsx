@@ -22,14 +22,13 @@ export default function Navbar() {
           <a href="#services" className={styles.navLink}>Services</a>
           <a href="#departments" className={styles.navLink}>Departments</a>
           <a href="#features" className={styles.navLink}>Features</a>
-          <a href="#doctors" className={styles.navLink}>Doctors</a>
           <a href="#testimonials" className={styles.navLink}>Testimonials</a>
-          <a href="#contact" className={styles.navLink}>Contact</a>
+          <a href="#gallery" className={styles.navLink}>Hospital Gallery</a>
         </nav>
 
         {/* Desktop Actions */}
         <div className={styles.navActions}>
-          <a href="#contact" className={styles.btnEmergency}>
+          <a href="tel:108" className={styles.btnEmergency}>
             <Phone size={18} />
             Emergency
           </a>

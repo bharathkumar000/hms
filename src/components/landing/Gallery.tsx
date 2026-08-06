@@ -18,7 +18,7 @@ const galleryItems = [
 
 export default function Gallery() {
   return (
-    <section className={landingStyles.section}>
+    <section id="gallery" className={landingStyles.section}>
       <h2 className={landingStyles.sectionTitle}>Hospital Gallery</h2>
       <p className={landingStyles.sectionSubtitle}>
         Take a virtual tour of our state-of-the-art facilities and modern medical infrastructure.
