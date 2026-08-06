@@ -1,11 +1,14 @@
+import { useModal } from '@/components/ModalProvider';
 'use client';
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import { Search, Clock, CheckCircle, XCircle } from 'lucide-react';
-import styles from '../users/users.module.css'; // Reusing user module styles
+import { Search } from 'lucide-react';
+import styles from '../users/users.module.css';
 
 export default function AdminAppointments() {
+  const { showAlert, showConfirm } = useModal();
+
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -29,6 +32,12 @@ export default function AdminAppointments() {
     setLoading(false);
   };
 
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    const { error } = await supabase.from('appointments').update({ status: newStatus }).eq('id', id);
+    if (error) showAlert('Error updating status: ' + error.message);
+    else fetchAppointments();
+  };
+
   const filteredAppointments = appointments.filter(app => {
     const matchesSearch = 
       app.patient_id?.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -43,7 +52,7 @@ export default function AdminAppointments() {
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
-      case 'Upcoming': return styles.badgeSuccess; // Using existing colors, adjust as needed
+      case 'Upcoming': return styles.badgeSuccess; // Green
       case 'Completed': return styles.badgeSuccess;
       case 'Cancelled': return styles.badgeDanger;
       default: return styles.badgeSuccess;
@@ -86,7 +95,9 @@ export default function AdminAppointments() {
         </div>
 
         {loading ? (
-          <p>Loading appointments...</p>
+          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+            Loading appointments...
+          </div>
         ) : (
           <div className={styles.tableContainer}>
             <table className={styles.table}>
@@ -97,6 +108,7 @@ export default function AdminAppointments() {
                   <th>Doctor</th>
                   <th>Department</th>
                   <th>Status</th>
+                  <th>Update Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -114,11 +126,22 @@ export default function AdminAppointments() {
                         {app.status}
                       </span>
                     </td>
+                    <td>
+                      <select 
+                        value={app.status}
+                        onChange={(e) => handleStatusChange(app.id, e.target.value)}
+                        style={{ padding: '0.4rem', borderRadius: '6px', border: '1px solid var(--color-border)', fontSize: '0.875rem' }}
+                      >
+                        <option value="Upcoming">Upcoming</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
+                      </select>
+                    </td>
                   </tr>
                 ))}
                 {filteredAppointments.length === 0 && (
                   <tr>
-                    <td colSpan={5} style={{ textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-secondary)' }}>
                       No appointments found.
                     </td>
                   </tr>

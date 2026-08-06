@@ -1,0 +1,138 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(2px);
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+.modal {
+  background-color: var(--color-card-bg);
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.closeBtn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.closeBtn:hover {
+  background-color: var(--color-light);
+  color: var(--color-text-primary);
+}
+
+.header {
+  padding: 1.5rem 1.5rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.iconInfo { color: var(--color-primary); }
+.iconSuccess { color: #10b981; }
+.iconWarning { color: #f59e0b; }
+.iconError { color: #ef4444; }
+.iconConfirm { color: #6366f1; }
+
+.body {
+  padding: 1rem 1.5rem 2rem;
+  text-align: center;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.body p {
+  margin: 0;
+}
+
+.footer {
+  padding: 1.25rem 1.5rem;
+  background-color: var(--color-light);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.btnCancel {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  background-color: white;
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  transition: all 0.2s;
+}
+
+.btnCancel:hover {
+  background-color: #f3f4f6;
+}
+
+.btnConfirm {
+  padding: 0.5rem 1.25rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  color: white;
+  transition: all 0.2s;
+}
+
+.btnPrimary {
+  background-color: var(--color-primary);
+}
+
+.btnPrimary:hover {
+  background-color: var(--color-secondary);
+}
+
+.btnDanger {
+  background-color: #ef4444;
+}
+
+.btnDanger:hover {
+  background-color: #dc2626;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}

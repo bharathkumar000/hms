@@ -1,17 +1,32 @@
+import { useModal } from '@/components/ModalProvider';
 'use client';
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import { Search, Plus, UserX, UserCheck } from 'lucide-react';
+import { Search, Plus, UserX, UserCheck, Pencil, Trash2 } from 'lucide-react';
 import styles from './users.module.css';
 
 export default function AdminUsers() {
-  const [activeTab, setActiveTab] = useState<'doctors' | 'receptionists' | 'lab_staff' | 'pharmacists' | 'patients'>('doctors');
+  const { showAlert, showConfirm } = useModal();
+
+  const [activeTab, setActiveTab] = useState<'doctors' | 'reception_staff' | 'lab_staff' | 'pharmacists' | 'profiles'>('doctors');
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [formData, setFormData] = useState({ first_name: '', last_name: '', email: '', phone_number: '', specialization: '', department: '' });
+  
+  const [showModal, setShowModal] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  
+  const [formData, setFormData] = useState({ 
+    first_name: '', 
+    last_name: '', 
+    email: '', 
+    phone_number: '', 
+    specialization: '', 
+    department: '',
+    role: 'Technician' // for lab_staff
+  });
 
   const supabase = createClient();
 
@@ -21,22 +36,42 @@ export default function AdminUsers() {
 
   const fetchUsers = async () => {
     setLoading(true);
-    let tableName = activeTab;
-    if (activeTab === 'patients') tableName = 'profiles';
-    
-    const { data } = await supabase.from(tableName).select('*').order('created_at', { ascending: false });
+    const { data, error } = await supabase.from(activeTab).select('*').order('created_at', { ascending: false });
     
     if (data) setUsers(data);
+    else if (error) console.error(error);
+    
     setLoading(false);
   };
 
-  const handleAddUser = async (e: React.FormEvent) => {
+  const resetForm = () => {
+    setFormData({ first_name: '', last_name: '', email: '', phone_number: '', specialization: '', department: '', role: 'Technician' });
+    setEditMode(false);
+    setEditingId(null);
+  };
+
+  const handleOpenAdd = () => {
+    resetForm();
+    setShowModal(true);
+  };
+
+  const handleOpenEdit = (user: any) => {
+    setFormData({
+      first_name: user.first_name || '',
+      last_name: user.last_name || '',
+      email: user.email || '',
+      phone_number: user.phone_number || '',
+      specialization: user.specialization || '',
+      department: user.department || '',
+      role: user.role || 'Technician'
+    });
+    setEditingId(user.id);
+    setEditMode(true);
+    setShowModal(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    let tableName = activeTab;
-    
-    // In a real app, you would use supabase.auth.admin.createUser to create the auth record first, 
-    // then insert into the role table. Since client-side doesn't have service_role key, 
-    // we'll just simulate adding to the table (leaving user_id null for demo).
     
     const insertData: any = {
       first_name: formData.first_name,
@@ -48,40 +83,56 @@ export default function AdminUsers() {
     if (activeTab === 'doctors') {
       insertData.specialization = formData.specialization;
       insertData.department = formData.department;
-      insertData.available = true;
-    }
-
-    if (activeTab === 'patients') {
-      // Patients use 'profiles' table
-      tableName = 'profiles';
-      // profiles doesn't have email in the table (it's in auth.users)
+    } else if (activeTab === 'lab_staff') {
+      insertData.role = formData.role;
+    } else if (activeTab === 'profiles') {
       delete insertData.email; 
-      // Need ID which comes from auth.users normally. Let's just block patient creation here for demo.
-      alert('Patient creation should be done via Patient Registration portal.');
-      return;
     }
 
-    const { error } = await supabase.from(tableName).insert([insertData]);
-
-    if (error) {
-      alert('Error adding user: ' + error.message);
+    if (editMode && editingId) {
+      // Update existing
+      const { error } = await supabase.from(activeTab).update(insertData).eq('id', editingId);
+      if (error) showAlert('Error updating user: ' + error.message);
+      else {
+        setShowModal(false);
+        fetchUsers();
+      }
     } else {
-      setShowAddModal(false);
-      setFormData({ first_name: '', last_name: '', email: '', phone_number: '', specialization: '', department: '' });
-      fetchUsers();
+      // Add new
+      if (activeTab === 'doctors') insertData.available = true;
+      const { error } = await supabase.from(activeTab).insert([insertData]);
+      if (error) showAlert('Error adding user: ' + error.message);
+      else {
+        setShowModal(false);
+        fetchUsers();
+      }
     }
   };
 
+  const handleDelete = async (id: string) => {
+    if (!await showConfirm('Are you sure you want to delete this record?')) return;
+    const { error } = await supabase.from(activeTab).delete().eq('id', id);
+    if (error) showAlert('Error deleting user: ' + error.message);
+    else fetchUsers();
+  };
+
   const toggleStatus = async (id: string, currentStatus: boolean) => {
-    if (activeTab !== 'doctors') return; // Only doctors have 'available' field right now
+    if (activeTab !== 'doctors') return; 
     await supabase.from('doctors').update({ available: !currentStatus }).eq('id', id);
     fetchUsers();
   };
 
   const filteredUsers = users.filter(u => 
     `${u.first_name} ${u.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.email?.toLowerCase().includes(searchQuery.toLowerCase())
+    (u.email && u.email.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+  const getTabLabel = (tab: string) => {
+    if (tab === 'reception_staff') return 'Receptionists';
+    if (tab === 'lab_staff') return 'Lab Staff';
+    if (tab === 'profiles') return 'Patients';
+    return tab.charAt(0).toUpperCase() + tab.slice(1);
+  };
 
   return (
     <div className={styles.container}>
@@ -91,19 +142,23 @@ export default function AdminUsers() {
           <p className={styles.details}>Manage hospital staff and patient accounts.</p>
         </div>
         <div className={styles.actions}>
-          <button className={styles.btnPrimary} onClick={() => setShowAddModal(true)} disabled={activeTab === 'patients'}>
-            <Plus size={20} /> Add {activeTab.slice(0, -1).replace('_', ' ')}
+          <button className={styles.btnPrimary} onClick={handleOpenAdd}>
+            <Plus size={20} /> Add {getTabLabel(activeTab).slice(0, -1)}
           </button>
         </div>
       </header>
 
       <div className={styles.card}>
         <div className={styles.tabs}>
-          <button className={`${styles.tab} ${activeTab === 'doctors' ? styles.activeTab : ''}`} onClick={() => setActiveTab('doctors')}>Doctors</button>
-          <button className={`${styles.tab} ${activeTab === 'receptionists' ? styles.activeTab : ''}`} onClick={() => setActiveTab('receptionists')}>Receptionists</button>
-          <button className={`${styles.tab} ${activeTab === 'lab_staff' ? styles.activeTab : ''}`} onClick={() => setActiveTab('lab_staff')}>Lab Staff</button>
-          <button className={`${styles.tab} ${activeTab === 'pharmacists' ? styles.activeTab : ''}`} onClick={() => setActiveTab('pharmacists')}>Pharmacists</button>
-          <button className={`${styles.tab} ${activeTab === 'patients' ? styles.activeTab : ''}`} onClick={() => setActiveTab('patients')}>Patients</button>
+          {['doctors', 'reception_staff', 'lab_staff', 'pharmacists', 'profiles'].map(tab => (
+            <button 
+              key={tab}
+              className={`${styles.tab} ${activeTab === tab ? styles.activeTab : ''}`} 
+              onClick={() => setActiveTab(tab as any)}
+            >
+              {getTabLabel(tab)}
+            </button>
+          ))}
         </div>
 
         <div className={styles.filterGroup}>
@@ -120,17 +175,20 @@ export default function AdminUsers() {
         </div>
 
         {loading ? (
-          <p>Loading users...</p>
+          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+            Loading users...
+          </div>
         ) : (
           <div className={styles.tableContainer}>
             <table className={styles.table}>
               <thead>
                 <tr>
                   <th>Name</th>
-                  {activeTab !== 'patients' && <th>Email</th>}
+                  {activeTab !== 'profiles' && <th>Email</th>}
                   <th>Phone</th>
                   {activeTab === 'doctors' && <th>Specialization</th>}
                   {activeTab === 'doctors' && <th>Department</th>}
+                  {activeTab === 'lab_staff' && <th>Role</th>}
                   {activeTab === 'doctors' && <th>Status</th>}
                   <th>Actions</th>
                 </tr>
@@ -139,10 +197,11 @@ export default function AdminUsers() {
                 {filteredUsers.map((user) => (
                   <tr key={user.id}>
                     <td style={{ fontWeight: 600 }}>{user.first_name} {user.last_name}</td>
-                    {activeTab !== 'patients' && <td>{user.email || 'N/A'}</td>}
+                    {activeTab !== 'profiles' && <td>{user.email || 'N/A'}</td>}
                     <td>{user.phone_number || 'N/A'}</td>
                     {activeTab === 'doctors' && <td>{user.specialization}</td>}
                     {activeTab === 'doctors' && <td>{user.department}</td>}
+                    {activeTab === 'lab_staff' && <td>{user.role}</td>}
                     {activeTab === 'doctors' && (
                       <td>
                         {user.available ? (
@@ -164,14 +223,30 @@ export default function AdminUsers() {
                             {user.available ? <UserX size={18} /> : <UserCheck size={18} />}
                           </button>
                         )}
+                        <button 
+                          className={styles.btnOutline} 
+                          style={{ padding: '0.4rem', border: 'none' }}
+                          onClick={() => handleOpenEdit(user)}
+                          title="Edit"
+                        >
+                          <Pencil size={18} />
+                        </button>
+                        <button 
+                          className={styles.btnOutline} 
+                          style={{ padding: '0.4rem', border: 'none', color: '#dc2626' }}
+                          onClick={() => handleDelete(user.id)}
+                          title="Delete"
+                        >
+                          <Trash2 size={18} />
+                        </button>
                       </div>
                     </td>
                   </tr>
                 ))}
                 {filteredUsers.length === 0 && (
                   <tr>
-                    <td colSpan={6} style={{ textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-                      No users found.
+                    <td colSpan={8} style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-secondary)' }}>
+                      No {getTabLabel(activeTab).toLowerCase()} found.
                     </td>
                   </tr>
                 )}
@@ -181,11 +256,13 @@ export default function AdminUsers() {
         )}
       </div>
 
-      {showAddModal && (
+      {showModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
-            <h2 style={{ marginBottom: '1.5rem', textTransform: 'capitalize' }}>Add New {activeTab.slice(0, -1).replace('_', ' ')}</h2>
-            <form onSubmit={handleAddUser}>
+            <h2 style={{ marginBottom: '1.5rem', textTransform: 'capitalize' }}>
+              {editMode ? 'Edit' : 'Add New'} {getTabLabel(activeTab).slice(0, -1)}
+            </h2>
+            <form onSubmit={handleSubmit}>
               <div style={{ display: 'flex', gap: '1rem' }}>
                 <div className={styles.formGroup} style={{ flex: 1 }}>
                   <label>First Name</label>
@@ -197,10 +274,12 @@ export default function AdminUsers() {
                 </div>
               </div>
               
-              <div className={styles.formGroup}>
-                <label>Email</label>
-                <input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-              </div>
+              {activeTab !== 'profiles' && (
+                <div className={styles.formGroup}>
+                  <label>Email</label>
+                  <input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                </div>
+              )}
               
               <div className={styles.formGroup}>
                 <label>Phone Number</label>
@@ -220,9 +299,19 @@ export default function AdminUsers() {
                 </>
               )}
 
+              {activeTab === 'lab_staff' && (
+                <div className={styles.formGroup}>
+                  <label>Role</label>
+                  <select value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
+                    <option value="Technician">Technician</option>
+                    <option value="Pathologist">Pathologist</option>
+                  </select>
+                </div>
+              )}
+
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
-                <button type="button" className={styles.btnOutline} onClick={() => setShowAddModal(false)}>Cancel</button>
-                <button type="submit" className={styles.btnPrimary}>Save User</button>
+                <button type="button" className={styles.btnOutline} onClick={() => setShowModal(false)}>Cancel</button>
+                <button type="submit" className={styles.btnPrimary}>{editMode ? 'Save Changes' : 'Save User'}</button>
               </div>
             </form>
           </div>

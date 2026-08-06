@@ -1,3 +1,4 @@
+import { useModal } from '@/components/ModalProvider';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,6 +7,8 @@ import { ClipboardList, AlertCircle, CheckCircle } from 'lucide-react';
 import styles from './prescriptions.module.css';
 
 export default function PharmacyPrescriptions() {
+  const { showAlert, showConfirm } = useModal();
+
   const [prescriptions, setPrescriptions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('Pending'); // Pending, Completed, All
@@ -76,7 +79,7 @@ export default function PharmacyPrescriptions() {
 
     const batch = inventory.find(b => b.id === selectedBatchId);
     if (!batch || batch.quantity < dispenseQty) {
-      alert('Insufficient stock in selected batch!');
+      showAlert('Insufficient stock in selected batch!');
       return;
     }
 
@@ -108,7 +111,7 @@ export default function PharmacyPrescriptions() {
 
     setShowModal(false);
     fetchPrescriptions();
-    alert('Medicine dispensed successfully!');
+    showAlert('Medicine dispensed successfully!');
   };
 
   const getStatusClass = (status: string) => {

@@ -1,3 +1,4 @@
+import { useModal } from '@/components/ModalProvider';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,6 +7,8 @@ import { Calendar, Filter } from 'lucide-react';
 import styles from './schedule.module.css';
 
 export default function DoctorSchedule() {
+  const { showAlert, showConfirm } = useModal();
+
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('Today'); // Today, Upcoming, All
@@ -45,7 +48,7 @@ export default function DoctorSchedule() {
     if (!error) {
       fetchAppointments();
     } else {
-      alert('Failed to update status');
+      showAlert('Failed to update status');
     }
   };
 

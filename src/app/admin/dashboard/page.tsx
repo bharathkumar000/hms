@@ -7,9 +7,13 @@ import {
   Activity,
   UserPlus,
   Building2,
-  Calendar
+  Calendar,
+  BriefcaseMedical,
+  CalendarCheck
 } from 'lucide-react';
 import styles from './dashboard.module.css';
+
+export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboard() {
   const supabase = await createClient();
@@ -25,8 +29,8 @@ export default async function AdminDashboard() {
     
     if (profile) {
       adminName = `${profile.first_name} ${profile.last_name}`;
-    } else if (user.email?.includes('admin')) {
-      adminName = 'Demo Admin';
+    } else if (user.email) {
+      adminName = user.email.split('@')[0];
     }
   }
 
@@ -42,7 +46,13 @@ export default async function AdminDashboard() {
     .from('doctors')
     .select('*', { count: 'exact', head: true });
 
-  // Today's Appointments (Admissions/Visits)
+  // Total Staff (Reception + Lab + Pharmacy)
+  const { count: recCount } = await supabase.from('reception_staff').select('*', { count: 'exact', head: true });
+  const { count: labCount } = await supabase.from('lab_staff').select('*', { count: 'exact', head: true });
+  const { count: pharmCount } = await supabase.from('pharmacists').select('*', { count: 'exact', head: true });
+  const totalStaff = (recCount || 0) + (labCount || 0) + (pharmCount || 0);
+
+  // Today's Appointments
   const today = new Date().toISOString().split('T')[0];
   const { count: todayAppointments } = await supabase
     .from('appointments')
@@ -56,12 +66,6 @@ export default async function AdminDashboard() {
     .gte('created_at', `${today}T00:00:00Z`);
 
   const todaysRevenue = todayBills?.reduce((sum, bill) => sum + Number(bill.amount), 0) || 0;
-
-  // Active Queue Status
-  const { count: waitingCount } = await supabase
-    .from('patient_queue')
-    .select('*', { count: 'exact', head: true })
-    .in('status', ['Waiting', 'In Consultation']);
 
   // Recent Audit Logs
   const { data: recentLogs } = await supabase
@@ -103,12 +107,22 @@ export default async function AdminDashboard() {
 
         <div className={styles.card}>
           <div className={styles.cardHeader}>
-            <div className={styles.iconWrapperWarning}>
-              <Activity size={24} />
+            <div className={styles.iconWrapper}>
+              <BriefcaseMedical size={24} />
             </div>
-            <h2 className={styles.cardTitle}>Live Queue</h2>
+            <h2 className={styles.cardTitle}>Total Staff</h2>
           </div>
-          <div className={styles.statValue} style={{ color: '#a16207' }}>{waitingCount || 0} waiting</div>
+          <div className={styles.statValue}>{totalStaff}</div>
+        </div>
+
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <div className={styles.iconWrapperWarning}>
+              <CalendarCheck size={24} />
+            </div>
+            <h2 className={styles.cardTitle}>Today's Appointments</h2>
+          </div>
+          <div className={styles.statValue}>{todayAppointments || 0}</div>
         </div>
 
         <div className={styles.card}>
@@ -130,13 +144,13 @@ export default async function AdminDashboard() {
           <h2 className={styles.sectionTitle}>Quick Actions</h2>
           <div className={styles.quickActions}>
             <Link href="/admin/users?tab=doctors" className={styles.actionBtn}>
-              <UserPlus size={18} /> Add Doctor
+              <UserPlus size={18} /> Add User
             </Link>
             <Link href="/admin/departments" className={styles.actionBtn}>
               <Building2 size={18} /> Manage Departments
             </Link>
             <Link href="/admin/appointments" className={styles.actionBtn}>
-              <Calendar size={18} /> View Schedule
+              <Calendar size={18} /> View Appointments
             </Link>
           </div>
         </div>

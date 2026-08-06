@@ -1,3 +1,4 @@
+import { useModal } from '@/components/ModalProvider';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,6 +7,8 @@ import { ListOrdered, Plus } from 'lucide-react';
 import styles from './queue.module.css';
 
 export default function ReceptionQueue() {
+  const { showAlert, showConfirm } = useModal();
+
   const [queue, setQueue] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -69,7 +72,7 @@ export default function ReceptionQueue() {
     });
 
     if (error) {
-      alert('Failed to check in: ' + error.message);
+      showAlert('Failed to check in: ' + error.message);
     } else {
       setShowModal(false);
       fetchQueue();

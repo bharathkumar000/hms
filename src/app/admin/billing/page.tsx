@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import { IndianRupee, Receipt, AlertCircle } from 'lucide-react';
-import styles from '../users/users.module.css'; // Reusing user module styles
+import { IndianRupee, Receipt, AlertCircle, CheckCircle2 } from 'lucide-react';
+import styles from '../users/users.module.css'; 
 
 export default function AdminBilling() {
   const [bills, setBills] = useState<any[]>([]);
@@ -34,6 +34,13 @@ export default function AdminBilling() {
     .filter(b => b.status === 'Pending')
     .reduce((sum, b) => sum + Number(b.amount), 0);
 
+  const completedCount = bills.filter(b => b.status === 'Paid').length;
+  const totalCompletedAmount = bills
+    .filter(b => b.status === 'Paid')
+    .reduce((sum, b) => sum + Number(b.amount), 0);
+
+  const refundedCount = bills.filter(b => b.status === 'Refunded').length;
+
   return (
     <div className={styles.container}>
       <header className={styles.header}>
@@ -43,25 +50,38 @@ export default function AdminBilling() {
         </div>
       </header>
 
-      {/* Quick Stats for Pending */}
-      <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1rem' }}>
-         <div className={styles.card} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      {/* Quick Stats */}
+      <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+         <div className={styles.card} style={{ flex: '1 1 250px', display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{ backgroundColor: '#fef9c3', color: '#a16207', padding: '1rem', borderRadius: '12px' }}>
               <AlertCircle size={28} />
             </div>
             <div>
-              <div style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>Pending Invoices</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>{pendingCount}</div>
-            </div>
-         </div>
-         <div className={styles.card} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ backgroundColor: '#fef9c3', color: '#a16207', padding: '1rem', borderRadius: '12px' }}>
-              <IndianRupee size={28} />
-            </div>
-            <div>
-              <div style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>Total Outstanding</div>
+              <div style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>Pending Payments ({pendingCount})</div>
               <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>
                 ₹{totalPendingAmount.toLocaleString()}
+              </div>
+            </div>
+         </div>
+         <div className={styles.card} style={{ flex: '1 1 250px', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ backgroundColor: '#dcfce7', color: '#16a34a', padding: '1rem', borderRadius: '12px' }}>
+              <CheckCircle2 size={28} />
+            </div>
+            <div>
+              <div style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>Completed Payments ({completedCount})</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>
+                ₹{totalCompletedAmount.toLocaleString()}
+              </div>
+            </div>
+         </div>
+         <div className={styles.card} style={{ flex: '1 1 250px', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ backgroundColor: '#f3f4f6', color: '#4b5563', padding: '1rem', borderRadius: '12px' }}>
+              <Receipt size={28} />
+            </div>
+            <div>
+              <div style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>Refunds</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>
+                {refundedCount}
               </div>
             </div>
          </div>
@@ -82,7 +102,9 @@ export default function AdminBilling() {
         </div>
 
         {loading ? (
-          <p>Loading bills...</p>
+          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+            Loading bills...
+          </div>
         ) : (
           <div className={styles.tableContainer}>
             <table className={styles.table}>
@@ -105,7 +127,7 @@ export default function AdminBilling() {
                     <td>{bill.description || 'N/A'}</td>
                     <td style={{ fontWeight: 600 }}>₹{Number(bill.amount).toLocaleString()}</td>
                     <td>
-                      <span className={`${styles.badge} ${bill.status === 'Paid' ? styles.badgeSuccess : styles.badgeDanger}`} style={{ backgroundColor: bill.status === 'Pending' ? '#fef9c3' : '', color: bill.status === 'Pending' ? '#a16207' : '' }}>
+                      <span className={`${styles.badge} ${bill.status === 'Paid' ? styles.badgeSuccess : ''}`} style={{ backgroundColor: bill.status === 'Pending' ? '#fef9c3' : bill.status === 'Refunded' ? '#f3f4f6' : '', color: bill.status === 'Pending' ? '#a16207' : bill.status === 'Refunded' ? '#4b5563' : '' }}>
                         {bill.status}
                       </span>
                     </td>
@@ -113,7 +135,7 @@ export default function AdminBilling() {
                 ))}
                 {filteredBills.length === 0 && (
                   <tr>
-                    <td colSpan={6} style={{ textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-secondary)' }}>
                       No bills found.
                     </td>
                   </tr>

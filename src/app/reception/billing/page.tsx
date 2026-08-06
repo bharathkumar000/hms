@@ -1,3 +1,4 @@
+import { useModal } from '@/components/ModalProvider';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,6 +7,8 @@ import { CreditCard, Plus, Receipt } from 'lucide-react';
 import styles from './billing.module.css';
 
 export default function ReceptionBilling() {
+  const { showAlert, showConfirm } = useModal();
+
   const [bills, setBills] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,7 +75,7 @@ export default function ReceptionBilling() {
       setDescription('');
       setSelectedAptId('');
     } else {
-      alert('Error generating bill: ' + error.message);
+      showAlert('Error generating bill: ' + error.message);
     }
   };
 
@@ -94,7 +97,7 @@ export default function ReceptionBilling() {
     });
 
     if (payError) {
-      alert('Payment failed: ' + payError.message);
+      showAlert('Payment failed: ' + payError.message);
       return;
     }
 

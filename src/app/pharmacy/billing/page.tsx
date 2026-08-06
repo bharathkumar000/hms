@@ -1,3 +1,4 @@
+import { useModal } from '@/components/ModalProvider';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,6 +7,8 @@ import { Receipt, Search, IndianRupee } from 'lucide-react';
 import styles from '../prescriptions/prescriptions.module.css';
 
 export default function PharmacyBilling() {
+  const { showAlert, showConfirm } = useModal();
+
   const [bills, setBills] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -60,7 +63,7 @@ export default function PharmacyBilling() {
   const handleCreateBill = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.patient_id) {
-      alert('Please select a patient.');
+      showAlert('Please select a patient.');
       return;
     }
     
@@ -77,9 +80,9 @@ export default function PharmacyBilling() {
       setFormData({ patient_id: '', amount: 0, description: 'Pharmacy Bill - Medicines Dispensed', due_date: new Date().toISOString().split('T')[0] });
       setSearchQuery('');
       fetchBills();
-      alert('Bill generated successfully! Payment can be received in the Patient Portal or Reception.');
+      showAlert('Bill generated successfully! Payment can be received in the Patient Portal or Reception.');
     } else {
-      alert('Error creating bill: ' + error.message);
+      showAlert('Error creating bill: ' + error.message);
     }
   };
 

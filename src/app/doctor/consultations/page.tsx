@@ -1,3 +1,4 @@
+import { useModal } from '@/components/ModalProvider';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,6 +7,8 @@ import { ClipboardList, ArrowLeft } from 'lucide-react';
 import styles from './consultations.module.css';
 
 export default function DoctorConsultations() {
+  const { showAlert, showConfirm } = useModal();
+
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeConsultation, setActiveConsultation] = useState<any>(null);
@@ -66,7 +69,7 @@ export default function DoctorConsultations() {
       });
 
     if (recordError) {
-      alert('Failed to save medical record.');
+      showAlert('Failed to save medical record.');
       setSubmitting(false);
       return;
     }

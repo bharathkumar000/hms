@@ -1,3 +1,4 @@
+import { useModal } from '@/components/ModalProvider';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,6 +7,8 @@ import { Plus, CheckCircle, Package } from 'lucide-react';
 import styles from '../inventory/inventory.module.css';
 
 export default function PharmacyOrders() {
+  const { showAlert, showConfirm } = useModal();
+
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -27,7 +30,7 @@ export default function PharmacyOrders() {
   };
 
   const handleReceiveOrder = async (orderId: string, items: any[], supplierId: string) => {
-    if (!confirm('Mark this order as received? This will add stock to inventory.')) return;
+    if (!await showConfirm('Mark this order as received? This will add stock to inventory.')) return;
     
     // 1. Update order status
     await supabase.from('purchase_orders').update({ status: 'Received', delivery_date: new Date().toISOString() }).eq('id', orderId);
@@ -58,7 +61,7 @@ export default function PharmacyOrders() {
     }
     
     fetchOrders();
-    alert('Stock received and inventory updated successfully!');
+    showAlert('Stock received and inventory updated successfully!');
   };
 
   const getStatusBadge = (status: string) => {
@@ -75,7 +78,7 @@ export default function PharmacyOrders() {
           <p className={styles.details}>Manage orders to suppliers and receive stock.</p>
         </div>
         <div className={styles.actions}>
-          <button className={styles.btnPrimary} onClick={() => alert('Creating POs feature coming soon! (Demo mode)')}>
+          <button className={styles.btnPrimary} onClick={() => showAlert('Creating POs feature coming soon! (Demo mode)')}>
             <Plus size={20} /> New Order
           </button>
         </div>

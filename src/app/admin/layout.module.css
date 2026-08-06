@@ -14,7 +14,7 @@
   position: sticky;
   top: 0;
   height: 100vh;
-  overflow-y: auto;
+  overflow-y: auto; overflow-x: hidden;
 }
 
 .logo {
@@ -35,6 +35,8 @@
   gap: 0.5rem;
   flex: 1;
 }
+
+.navGroup:first-of-type { margin-top: 0; }
 
 .navGroup {
   font-size: 0.75rem;
@@ -109,5 +111,6 @@
 .main {
   flex: 1;
   padding: 2.5rem;
-  overflow-y: auto;
+  overflow-y: auto; overflow-x: hidden;
 }
+

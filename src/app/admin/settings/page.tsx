@@ -1,23 +1,92 @@
+import { useModal } from '@/components/ModalProvider';
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createClient } from '@/utils/supabase/client';
 import { Save, Shield, Building, User } from 'lucide-react';
 import styles from '../users/users.module.css';
 
 export default function AdminSettings() {
-  const [activeTab, setActiveTab] = useState<'hospital' | 'rbac' | 'profile'>('hospital');
+  const { showAlert, showConfirm } = useModal();
 
+  const [activeTab, setActiveTab] = useState<'hospital' | 'rbac' | 'profile'>('hospital');
+  const [loading, setLoading] = useState(false);
+
+  const supabase = createClient();
+
+  // Hospital Info State (Static for demo as no table exists)
   const [hospitalInfo, setHospitalInfo] = useState({
-    name: 'Apollo Spectra Hospital',
+    name: 'HMS Medical Center',
     address: '123 Health Avenue, Medical District',
-    phone: '+91 9876543210',
-    email: 'contact@apollospectra.com',
-    website: 'www.apollospectra.com'
+    phone: '+1 (800) 123-4567',
+    email: 'contact@hmsmedical.com',
+    website: 'www.hmsmedical.com'
   });
 
-  const handleSave = (e: React.FormEvent) => {
+  // Profile State
+  const [profile, setProfile] = useState({ first_name: '', last_name: '', email: '' });
+  const [adminId, setAdminId] = useState('');
+  
+  // Password State
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data } = await supabase.from('admins').select('*').eq('user_id', user.id).single();
+      if (data) {
+        setProfile({ first_name: data.first_name, last_name: data.last_name, email: data.email });
+        setAdminId(data.id);
+      } else {
+        setProfile({ ...profile, email: user.email || '' });
+      }
+    }
+  };
+
+  const handleHospitalSave = (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Settings saved successfully! (Demo only)');
+    showAlert('Hospital settings saved successfully! (Simulated)');
+  };
+
+  const handleProfileSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    // Update Admins table
+    if (adminId) {
+      const { error } = await supabase.from('admins').update({
+        first_name: profile.first_name,
+        last_name: profile.last_name,
+        email: profile.email
+      }).eq('id', adminId);
+      if (error) showAlert('Error updating profile: ' + error.message);
+    }
+
+    // Update Password if provided
+    if (password) {
+      if (password !== confirmPassword) {
+        showAlert("Passwords don't match.");
+        setLoading(false);
+        return;
+      }
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) {
+        showAlert('Error updating password: ' + error.message);
+      } else {
+        showAlert('Profile and password updated successfully.');
+        setPassword('');
+        setConfirmPassword('');
+      }
+    } else {
+      showAlert('Profile updated successfully.');
+    }
+    
+    setLoading(false);
   };
 
   return (
@@ -43,7 +112,7 @@ export default function AdminSettings() {
         </div>
 
         {activeTab === 'hospital' && (
-          <form onSubmit={handleSave} style={{ maxWidth: '600px' }}>
+          <form onSubmit={handleHospitalSave} style={{ maxWidth: '600px' }}>
             <div className={styles.formGroup}>
               <label>Hospital Name</label>
               <input type="text" value={hospitalInfo.name} onChange={e => setHospitalInfo({...hospitalInfo, name: e.target.value})} />
@@ -116,21 +185,35 @@ export default function AdminSettings() {
         )}
 
         {activeTab === 'profile' && (
-          <form onSubmit={handleSave} style={{ maxWidth: '600px' }}>
-            <div className={styles.formGroup}>
-              <label>Current Password</label>
-              <input type="password" placeholder="••••••••" />
+          <form onSubmit={handleProfileSave} style={{ maxWidth: '600px' }}>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <div className={styles.formGroup} style={{ flex: 1 }}>
+                <label>First Name</label>
+                <input type="text" value={profile.first_name} onChange={e => setProfile({...profile, first_name: e.target.value})} required />
+              </div>
+              <div className={styles.formGroup} style={{ flex: 1 }}>
+                <label>Last Name</label>
+                <input type="text" value={profile.last_name} onChange={e => setProfile({...profile, last_name: e.target.value})} required />
+              </div>
             </div>
             <div className={styles.formGroup}>
+              <label>Email Address</label>
+              <input type="email" value={profile.email} onChange={e => setProfile({...profile, email: e.target.value})} required />
+            </div>
+
+            <hr style={{ margin: '2rem 0', borderColor: 'var(--color-border)' }} />
+            <h3 style={{ marginBottom: '1rem' }}>Change Password</h3>
+            
+            <div className={styles.formGroup}>
               <label>New Password</label>
-              <input type="password" placeholder="Leave blank to keep current" />
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Leave blank to keep current" minLength={6} />
             </div>
             <div className={styles.formGroup}>
               <label>Confirm New Password</label>
-              <input type="password" placeholder="Leave blank to keep current" />
+              <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Leave blank to keep current" minLength={6} />
             </div>
-            <button type="submit" className={styles.btnPrimary} style={{ marginTop: '1.5rem' }}>
-              <Save size={18} /> Update Profile
+            <button type="submit" className={styles.btnPrimary} style={{ marginTop: '1.5rem' }} disabled={loading}>
+              <Save size={18} /> {loading ? 'Saving...' : 'Update Profile'}
             </button>
           </form>
         )}

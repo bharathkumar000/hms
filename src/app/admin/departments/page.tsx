@@ -1,16 +1,23 @@
+import { useModal } from '@/components/ModalProvider';
 'use client';
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
-import styles from '../users/users.module.css'; // Reusing user module styles
+import styles from '../users/users.module.css'; 
 
 export default function AdminDepartments() {
+  const { showAlert, showConfirm } = useModal();
+
   const [departments, setDepartments] = useState<any[]>([]);
   const [doctors, setDoctors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [formData, setFormData] = useState({ name: '', description: '', head_doctor_id: '' });
+  
+  const [showModal, setShowModal] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  
+  const [formData, setFormData] = useState({ name: '', description: '', head_doctor_id: '', status: 'Active' });
 
   const supabase = createClient();
 
@@ -21,7 +28,7 @@ export default function AdminDepartments() {
   const fetchData = async () => {
     setLoading(true);
     // Fetch departments
-    const { data: deptData } = await supabase.from('departments').select('*, head_doctor_id(*)');
+    const { data: deptData } = await supabase.from('departments').select('*, head_doctor_id(id, first_name, last_name)').order('created_at', { ascending: false });
     // Fetch doctors for the dropdown
     const { data: docData } = await supabase.from('doctors').select('id, first_name, last_name, specialization');
     
@@ -30,35 +37,58 @@ export default function AdminDepartments() {
     setLoading(false);
   };
 
+  const handleOpenAdd = () => {
+    setFormData({ name: '', description: '', head_doctor_id: '', status: 'Active' });
+    setEditMode(false);
+    setEditingId(null);
+    setShowModal(true);
+  };
+
+  const handleOpenEdit = (dept: any) => {
+    setFormData({
+      name: dept.name || '',
+      description: dept.description || '',
+      head_doctor_id: dept.head_doctor_id ? dept.head_doctor_id.id : '',
+      status: dept.status || 'Active'
+    });
+    setEditingId(dept.id);
+    setEditMode(true);
+    setShowModal(true);
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const { error } = await supabase.from('departments').insert([{
+    const saveData = {
       name: formData.name,
       description: formData.description,
-      head_doctor_id: formData.head_doctor_id || null
-    }]);
+      head_doctor_id: formData.head_doctor_id || null,
+      status: formData.status
+    };
 
-    if (error) {
-      alert('Error saving department: ' + error.message);
+    if (editMode && editingId) {
+      const { error } = await supabase.from('departments').update(saveData).eq('id', editingId);
+      if (error) showAlert('Error updating department: ' + error.message);
+      else {
+        setShowModal(false);
+        fetchData();
+      }
     } else {
-      setShowAddModal(false);
-      setFormData({ name: '', description: '', head_doctor_id: '' });
-      fetchData();
+      const { error } = await supabase.from('departments').insert([saveData]);
+      if (error) showAlert('Error adding department: ' + error.message);
+      else {
+        setShowModal(false);
+        fetchData();
+      }
     }
   };
 
-  const handleDelete = async (id: string, headId: string | null) => {
-    if (headId) {
-      alert('Cannot delete department while it has an assigned head or staff. Remove them first.');
-      return;
-    }
-    
-    const confirmDelete = confirm('Are you sure you want to delete this department?');
+  const handleDelete = async (id: string) => {
+    const confirmDelete = await showConfirm('Are you sure you want to delete this department?');
     if (!confirmDelete) return;
 
     const { error } = await supabase.from('departments').delete().eq('id', id);
-    if (error) alert('Error: ' + error.message);
+    if (error) showAlert('Error deleting department: ' + error.message);
     else fetchData();
   };
 
@@ -70,7 +100,7 @@ export default function AdminDepartments() {
           <p className={styles.details}>Manage hospital departments and their heads.</p>
         </div>
         <div className={styles.actions}>
-          <button className={styles.btnPrimary} onClick={() => setShowAddModal(true)}>
+          <button className={styles.btnPrimary} onClick={handleOpenAdd}>
             <Plus size={20} /> Add Department
           </button>
         </div>
@@ -78,7 +108,9 @@ export default function AdminDepartments() {
 
       <div className={styles.card}>
         {loading ? (
-          <p>Loading departments...</p>
+          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+            Loading departments...
+          </div>
         ) : (
           <div className={styles.tableContainer}>
             <table className={styles.table}>
@@ -95,11 +127,11 @@ export default function AdminDepartments() {
                 {departments.map((dept) => (
                   <tr key={dept.id}>
                     <td style={{ fontWeight: 600 }}>{dept.name}</td>
-                    <td>{dept.description}</td>
+                    <td>{dept.description || '-'}</td>
                     <td>
                       {dept.head_doctor_id 
                         ? `Dr. ${dept.head_doctor_id.first_name} ${dept.head_doctor_id.last_name}` 
-                        : 'Unassigned'}
+                        : <span style={{ color: 'var(--color-text-secondary)' }}>Unassigned</span>}
                     </td>
                     <td>
                       <span className={`${styles.badge} ${dept.status === 'Active' ? styles.badgeSuccess : styles.badgeDanger}`}>
@@ -108,7 +140,20 @@ export default function AdminDepartments() {
                     </td>
                     <td>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button className={styles.btnOutline} style={{ padding: '0.4rem', border: 'none', color: '#dc2626' }} onClick={() => handleDelete(dept.id, dept.head_doctor_id)}>
+                        <button 
+                          className={styles.btnOutline} 
+                          style={{ padding: '0.4rem', border: 'none' }} 
+                          onClick={() => handleOpenEdit(dept)}
+                          title="Edit"
+                        >
+                          <Edit2 size={18} />
+                        </button>
+                        <button 
+                          className={styles.btnOutline} 
+                          style={{ padding: '0.4rem', border: 'none', color: '#dc2626' }} 
+                          onClick={() => handleDelete(dept.id)}
+                          title="Delete"
+                        >
                           <Trash2 size={18} />
                         </button>
                       </div>
@@ -117,7 +162,7 @@ export default function AdminDepartments() {
                 ))}
                 {departments.length === 0 && (
                   <tr>
-                    <td colSpan={5} style={{ textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+                    <td colSpan={5} style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-secondary)' }}>
                       No departments configured.
                     </td>
                   </tr>
@@ -128,10 +173,10 @@ export default function AdminDepartments() {
         )}
       </div>
 
-      {showAddModal && (
+      {showModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
-            <h2 style={{ marginBottom: '1.5rem' }}>Add New Department</h2>
+            <h2 style={{ marginBottom: '1.5rem' }}>{editMode ? 'Edit' : 'Add New'} Department</h2>
             <form onSubmit={handleSave}>
               <div className={styles.formGroup}>
                 <label>Department Name</label>
@@ -140,24 +185,34 @@ export default function AdminDepartments() {
               
               <div className={styles.formGroup}>
                 <label>Description</label>
-                <input type="text" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Brief overview of department functions" />
+                <textarea rows={3} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)' }} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Brief overview of department functions" />
               </div>
               
-              <div className={styles.formGroup}>
-                <label>Assign Head Doctor (Optional)</label>
-                <select value={formData.head_doctor_id} onChange={e => setFormData({...formData, head_doctor_id: e.target.value})}>
-                  <option value="">Select a Doctor</option>
-                  {doctors.map(doc => (
-                    <option key={doc.id} value={doc.id}>
-                      Dr. {doc.first_name} {doc.last_name} ({doc.specialization})
-                    </option>
-                  ))}
-                </select>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <div className={styles.formGroup} style={{ flex: 1 }}>
+                  <label>Assign Head Doctor (Optional)</label>
+                  <select value={formData.head_doctor_id} onChange={e => setFormData({...formData, head_doctor_id: e.target.value})}>
+                    <option value="">None</option>
+                    {doctors.map(doc => (
+                      <option key={doc.id} value={doc.id}>
+                        Dr. {doc.first_name} {doc.last_name} ({doc.specialization})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className={styles.formGroup} style={{ flex: 1 }}>
+                  <label>Status</label>
+                  <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                </div>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
-                <button type="button" className={styles.btnOutline} onClick={() => setShowAddModal(false)}>Cancel</button>
-                <button type="submit" className={styles.btnPrimary}>Save Department</button>
+                <button type="button" className={styles.btnOutline} onClick={() => setShowModal(false)}>Cancel</button>
+                <button type="submit" className={styles.btnPrimary}>{editMode ? 'Save Changes' : 'Save Department'}</button>
               </div>
             </form>
           </div>

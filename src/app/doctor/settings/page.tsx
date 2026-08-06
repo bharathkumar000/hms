@@ -1,3 +1,4 @@
+import { useModal } from '@/components/ModalProvider';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -5,6 +6,8 @@ import { createClient } from '@/utils/supabase/client';
 import styles from './settings.module.css';
 
 export default function DoctorSettings() {
+  const { showAlert, showConfirm } = useModal();
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
@@ -48,7 +51,7 @@ export default function DoctorSettings() {
     setSaving(true);
     await supabase.from('doctors').update(profile).eq('user_id', doctorId);
     setSaving(false);
-    alert('Profile updated successfully');
+    showAlert('Profile updated successfully');
   };
 
   const handleApplyLeave = async (e: React.FormEvent) => {
@@ -69,7 +72,7 @@ export default function DoctorSettings() {
     setLeaveReason('');
     fetchData();
     setSaving(false);
-    alert('Leave request submitted');
+    showAlert('Leave request submitted');
   };
 
   if (loading) return <div className={styles.container}><p>Loading settings...</p></div>;

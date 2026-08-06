@@ -229,36 +229,49 @@ ALTER TABLE public.doctors ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for Patients
 -- Patients can read and update their own profile
+DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
 CREATE POLICY "Users can view own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
 CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
 
 -- Patients can read their own appointments
+DROP POLICY IF EXISTS "Users can view own appointments" ON public.appointments;
 CREATE POLICY "Users can view own appointments" ON public.appointments FOR SELECT USING (auth.uid() = patient_id);
 -- Patients can create their own appointments
+DROP POLICY IF EXISTS "Users can create own appointments" ON public.appointments;
 CREATE POLICY "Users can create own appointments" ON public.appointments FOR INSERT WITH CHECK (auth.uid() = patient_id);
 -- Patients can update their own appointments (e.g., reschedule, cancel)
+DROP POLICY IF EXISTS "Users can update own appointments" ON public.appointments;
 CREATE POLICY "Users can update own appointments" ON public.appointments FOR UPDATE USING (auth.uid() = patient_id);
 
 -- Patients can read their own medical records
+DROP POLICY IF EXISTS "Users can view own medical records" ON public.medical_records;
 CREATE POLICY "Users can view own medical records" ON public.medical_records FOR SELECT USING (auth.uid() = patient_id);
 
 -- Patients can read their own documents
+DROP POLICY IF EXISTS "Users can view own documents" ON public.documents;
 CREATE POLICY "Users can view own documents" ON public.documents FOR SELECT USING (auth.uid() = patient_id);
 
 -- Patients can read their own prescriptions
+DROP POLICY IF EXISTS "Users can view own prescriptions" ON public.prescriptions;
 CREATE POLICY "Users can view own prescriptions" ON public.prescriptions FOR SELECT USING (auth.uid() = patient_id);
 
 -- Patients can read their own bills
+DROP POLICY IF EXISTS "Users can view own bills" ON public.bills;
 CREATE POLICY "Users can view own bills" ON public.bills FOR SELECT USING (auth.uid() = patient_id);
 
 -- Patients can read their own payments
+DROP POLICY IF EXISTS "Users can view own payments" ON public.payments;
 CREATE POLICY "Users can view own payments" ON public.payments FOR SELECT USING (auth.uid() = patient_id);
 
 -- Patients can read and update their own notifications
+DROP POLICY IF EXISTS "Users can view own notifications" ON public.notifications;
 CREATE POLICY "Users can view own notifications" ON public.notifications FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own notifications" ON public.notifications;
 CREATE POLICY "Users can update own notifications" ON public.notifications FOR UPDATE USING (auth.uid() = user_id);
 
 -- Doctors table is readable by everyone (so patients can see doctor list)
+DROP POLICY IF EXISTS "Doctors are viewable by everyone" ON public.doctors;
 CREATE POLICY "Doctors are viewable by everyone" ON public.doctors FOR SELECT USING (true);
 
 -- Enable RLS on new tables
@@ -274,47 +287,76 @@ ALTER TABLE public.lab_staff ENABLE ROW LEVEL SECURITY;
 -- In a real app, doctors would only access their own assigned patients.
 -- For this demo/development environment, we will allow doctors to view everything, 
 -- or limit to doctor_id where applicable.
+DROP POLICY IF EXISTS "Doctors view all appointments" ON public.appointments;
 CREATE POLICY "Doctors view all appointments" ON public.appointments FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Doctors update own appointments" ON public.appointments;
 CREATE POLICY "Doctors update own appointments" ON public.appointments FOR UPDATE USING (auth.uid() = doctor_id);
+DROP POLICY IF EXISTS "Doctors view all medical records" ON public.medical_records;
 CREATE POLICY "Doctors view all medical records" ON public.medical_records FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Doctors insert medical records" ON public.medical_records;
 CREATE POLICY "Doctors insert medical records" ON public.medical_records FOR INSERT WITH CHECK (auth.uid() = doctor_id);
+DROP POLICY IF EXISTS "Doctors update medical records" ON public.medical_records;
 CREATE POLICY "Doctors update medical records" ON public.medical_records FOR UPDATE USING (auth.uid() = doctor_id);
+DROP POLICY IF EXISTS "Doctors view all prescriptions" ON public.prescriptions;
 CREATE POLICY "Doctors view all prescriptions" ON public.prescriptions FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Doctors insert prescriptions" ON public.prescriptions;
 CREATE POLICY "Doctors insert prescriptions" ON public.prescriptions FOR INSERT WITH CHECK (auth.uid() = doctor_id);
+DROP POLICY IF EXISTS "Doctors view all profiles" ON public.profiles;
 CREATE POLICY "Doctors view all profiles" ON public.profiles FOR SELECT USING (true);
 
 -- Doctor Availability
+DROP POLICY IF EXISTS "Doctors view own availability" ON public.doctor_availability;
 CREATE POLICY "Doctors view own availability" ON public.doctor_availability FOR SELECT USING (auth.uid() = doctor_id);
+DROP POLICY IF EXISTS "Doctors insert own availability" ON public.doctor_availability;
 CREATE POLICY "Doctors insert own availability" ON public.doctor_availability FOR INSERT WITH CHECK (auth.uid() = doctor_id);
+DROP POLICY IF EXISTS "Doctors update own availability" ON public.doctor_availability;
 CREATE POLICY "Doctors update own availability" ON public.doctor_availability FOR UPDATE USING (auth.uid() = doctor_id);
 
 -- Leave Requests
+DROP POLICY IF EXISTS "Doctors view own leave" ON public.leave_requests;
 CREATE POLICY "Doctors view own leave" ON public.leave_requests FOR SELECT USING (auth.uid() = doctor_id);
+DROP POLICY IF EXISTS "Doctors insert own leave" ON public.leave_requests;
 CREATE POLICY "Doctors insert own leave" ON public.leave_requests FOR INSERT WITH CHECK (auth.uid() = doctor_id);
 
 -- Lab Orders
+DROP POLICY IF EXISTS "Doctors view all lab orders" ON public.lab_orders;
 CREATE POLICY "Doctors view all lab orders" ON public.lab_orders FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Doctors insert lab orders" ON public.lab_orders;
 CREATE POLICY "Doctors insert lab orders" ON public.lab_orders FOR INSERT WITH CHECK (auth.uid() = doctor_id);
 
 -- Emergency Cases
+DROP POLICY IF EXISTS "Doctors view all emergency cases" ON public.emergency_cases;
 CREATE POLICY "Doctors view all emergency cases" ON public.emergency_cases FOR SELECT USING (true);
 
 -- RLS Policies for Reception Staff
 -- In this demo environment, reception staff have full access to these tables.
+DROP POLICY IF EXISTS "Reception staff full access profiles" ON public.profiles;
 CREATE POLICY "Reception staff full access profiles" ON public.profiles FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Reception staff full access appointments" ON public.appointments;
 CREATE POLICY "Reception staff full access appointments" ON public.appointments FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Reception staff full access patient_queue" ON public.patient_queue;
 CREATE POLICY "Reception staff full access patient_queue" ON public.patient_queue FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Reception staff full access bills" ON public.bills;
 CREATE POLICY "Reception staff full access bills" ON public.bills FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Reception staff full access payments" ON public.payments;
 CREATE POLICY "Reception staff full access payments" ON public.payments FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Reception staff view own profile" ON public.reception_staff;
 CREATE POLICY "Reception staff view own profile" ON public.reception_staff FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Reception staff update own profile" ON public.reception_staff;
 CREATE POLICY "Reception staff update own profile" ON public.reception_staff FOR UPDATE USING (auth.uid() = user_id);
 
 -- RLS Policies for Laboratory Staff
+DROP POLICY IF EXISTS "Lab staff full access lab_orders" ON public.lab_orders;
 CREATE POLICY "Lab staff full access lab_orders" ON public.lab_orders FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Lab staff view profiles" ON public.profiles;
 CREATE POLICY "Lab staff view profiles" ON public.profiles FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Lab staff view doctors" ON public.doctors;
 CREATE POLICY "Lab staff view doctors" ON public.doctors FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Lab staff full access documents" ON public.documents;
 CREATE POLICY "Lab staff full access documents" ON public.documents FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Lab staff view own profile" ON public.lab_staff;
 CREATE POLICY "Lab staff view own profile" ON public.lab_staff FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Lab staff update own profile" ON public.lab_staff;
 CREATE POLICY "Lab staff update own profile" ON public.lab_staff FOR UPDATE USING (auth.uid() = user_id);
 
 -- --------------------------------------------------------
@@ -411,20 +453,32 @@ ALTER TABLE public.purchase_order_items ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for Pharmacists
 -- Pharmacists have full access to pharmacy modules
+DROP POLICY IF EXISTS "Pharmacist view own profile" ON public.pharmacists;
 CREATE POLICY "Pharmacist view own profile" ON public.pharmacists FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Pharmacist update own profile" ON public.pharmacists;
 CREATE POLICY "Pharmacist update own profile" ON public.pharmacists FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Pharmacist full access medicines" ON public.medicines;
 CREATE POLICY "Pharmacist full access medicines" ON public.medicines FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Pharmacist full access suppliers" ON public.suppliers;
 CREATE POLICY "Pharmacist full access suppliers" ON public.suppliers FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Pharmacist full access batches" ON public.medicine_batches;
 CREATE POLICY "Pharmacist full access batches" ON public.medicine_batches FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Pharmacist full access transactions" ON public.stock_transactions;
 CREATE POLICY "Pharmacist full access transactions" ON public.stock_transactions FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Pharmacist full access purchase orders" ON public.purchase_orders;
 CREATE POLICY "Pharmacist full access purchase orders" ON public.purchase_orders FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Pharmacist full access po items" ON public.purchase_order_items;
 CREATE POLICY "Pharmacist full access po items" ON public.purchase_order_items FOR ALL USING (true) WITH CHECK (true);
 
 -- Pharmacists need access to prescriptions and profiles
+DROP POLICY IF EXISTS "Pharmacist full access prescriptions" ON public.prescriptions;
 CREATE POLICY "Pharmacist full access prescriptions" ON public.prescriptions FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Pharmacist view profiles" ON public.profiles;
 CREATE POLICY "Pharmacist view profiles" ON public.profiles FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Pharmacist full access bills" ON public.bills;
 CREATE POLICY "Pharmacist full access bills" ON public.bills FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Pharmacist full access payments" ON public.payments;
 CREATE POLICY "Pharmacist full access payments" ON public.payments FOR ALL USING (true) WITH CHECK (true);
 
 -- --------------------------------------------------------
@@ -489,8 +543,25 @@ ALTER TABLE public.system_logs ENABLE ROW LEVEL SECURITY;
 -- but in reality we would use auth.uid() matching an admin record. 
 -- Since we are doing a demo where any logged in user can potentially be an admin if they use the admin portal login,
 -- we'll allow all authenticated users (or just true) for these new tables.
+DROP POLICY IF EXISTS "Admins full access admins" ON public.admins;
 CREATE POLICY "Admins full access admins" ON public.admins FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Admins full access departments" ON public.departments;
 CREATE POLICY "Admins full access departments" ON public.departments FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Admins full access equipment" ON public.equipment;
 CREATE POLICY "Admins full access equipment" ON public.equipment FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Admins full access audit_logs" ON public.audit_logs;
 CREATE POLICY "Admins full access audit_logs" ON public.audit_logs FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Admins full access system_logs" ON public.system_logs;
 CREATE POLICY "Admins full access system_logs" ON public.system_logs FOR ALL USING (true) WITH CHECK (true);
+
+-- Adding Admin full access policies for User Management modules
+DROP POLICY IF EXISTS "Admins full access doctors" ON public.doctors;
+CREATE POLICY "Admins full access doctors" ON public.doctors FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Admins full access reception_staff" ON public.reception_staff;
+CREATE POLICY "Admins full access reception_staff" ON public.reception_staff FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Admins full access pharmacists" ON public.pharmacists;
+CREATE POLICY "Admins full access pharmacists" ON public.pharmacists FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Admins full access lab_staff" ON public.lab_staff;
+CREATE POLICY "Admins full access lab_staff" ON public.lab_staff FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Admins full access profiles" ON public.profiles;
+CREATE POLICY "Admins full access profiles" ON public.profiles FOR ALL USING (true) WITH CHECK (true);

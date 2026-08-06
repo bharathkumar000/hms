@@ -1,3 +1,4 @@
+import { useModal } from '@/components/ModalProvider';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,6 +7,8 @@ import { Plus, Search, Building2, Phone, Mail } from 'lucide-react';
 import styles from '../inventory/inventory.module.css'; // Reusing inventory CSS
 
 export default function PharmacySuppliers() {
+  const { showAlert, showConfirm } = useModal();
+
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -48,7 +51,7 @@ export default function PharmacySuppliers() {
       setFormData({ name: '', contact_person: '', phone: '', email: '', address: '' });
       fetchSuppliers();
     } else {
-      alert('Error adding supplier: ' + error.message);
+      showAlert('Error adding supplier: ' + error.message);
     }
   };
 

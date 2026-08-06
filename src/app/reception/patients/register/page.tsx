@@ -1,3 +1,4 @@
+import { useModal } from '@/components/ModalProvider';
 'use client';
 
 import { useState } from 'react';
@@ -7,6 +8,8 @@ import { ArrowLeft, CheckCircle } from 'lucide-react';
 import styles from '../patients.module.css';
 
 export default function RegisterPatient() {
+  const { showAlert, showConfirm } = useModal();
+
   const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
@@ -50,7 +53,7 @@ export default function RegisterPatient() {
       if (authError || !patientId) {
         // Fallback for demo environment if sign-up fails (e.g. rate limit): 
         // We will generate a UUID and try to insert it directly. If FK fails, we catch it.
-        alert('Warning: Auth creation failed. This might be due to demo environment limits. Error: ' + authError?.message);
+        showAlert('Warning: Auth creation failed. This might be due to demo environment limits. Error: ' + authError?.message);
         setLoading(false);
         return;
       }
@@ -72,7 +75,7 @@ export default function RegisterPatient() {
       });
 
       if (profileError) {
-        alert('Failed to save patient profile: ' + profileError.message);
+        showAlert('Failed to save patient profile: ' + profileError.message);
         setLoading(false);
         return;
       }
@@ -80,7 +83,7 @@ export default function RegisterPatient() {
       setUhid(patientId.substring(0, 8).toUpperCase());
       setSuccess(true);
     } catch (err: any) {
-      alert('Registration error: ' + err.message);
+      showAlert('Registration error: ' + err.message);
     }
     setLoading(false);
   };

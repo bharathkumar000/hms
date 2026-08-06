@@ -1,3 +1,4 @@
+import { useModal } from '@/components/ModalProvider';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,6 +7,8 @@ import { Save, User } from 'lucide-react';
 import styles from '../patients/patients.module.css'; // Reusing patient form styles
 
 export default function ReceptionSettings() {
+  const { showAlert, showConfirm } = useModal();
+
   const [profile, setProfile] = useState({
     first_name: '',
     last_name: '',
@@ -57,9 +60,9 @@ export default function ReceptionSettings() {
       }, { onConflict: 'user_id' });
 
     if (error) {
-      alert('Error updating profile: ' + error.message);
+      showAlert('Error updating profile: ' + error.message);
     } else {
-      alert('Profile updated successfully!');
+      showAlert('Profile updated successfully!');
     }
     
     setSaving(false);

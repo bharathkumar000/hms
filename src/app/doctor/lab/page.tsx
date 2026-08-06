@@ -1,3 +1,4 @@
+import { useModal } from '@/components/ModalProvider';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,6 +7,8 @@ import { Microscope } from 'lucide-react';
 import styles from './lab.module.css';
 
 export default function DoctorLab() {
+  const { showAlert, showConfirm } = useModal();
+
   const [patients, setPatients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -43,7 +46,7 @@ export default function DoctorLab() {
 
   const handleOrderTest = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedPatientId) return alert('Please select a patient.');
+    if (!selectedPatientId) return showAlert('Please select a patient.');
 
     setSubmitting(true);
     
@@ -61,7 +64,7 @@ export default function DoctorLab() {
       });
 
     if (error) {
-      alert('Failed to save lab order.');
+      showAlert('Failed to save lab order.');
     } else {
       setTestCategory('');
       setNotes('');

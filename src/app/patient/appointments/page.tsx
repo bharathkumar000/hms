@@ -1,3 +1,4 @@
+import { useModal } from '@/components/ModalProvider';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -5,6 +6,8 @@ import { createClient } from '@/utils/supabase/client';
 import styles from './appointments.module.css';
 
 export default function AppointmentsPage() {
+  const { showAlert, showConfirm } = useModal();
+
   const supabase = createClient();
   const [appointments, setAppointments] = useState<any[]>([]);
   const [doctors, setDoctors] = useState<any[]>([]);
@@ -62,7 +65,7 @@ export default function AppointmentsPage() {
   };
 
   const handleCancel = async (id: string) => {
-    if (confirm('Are you sure you want to cancel this appointment?')) {
+    if (await showConfirm('Are you sure you want to cancel this appointment?')) {
       await supabase
         .from('appointments')
         .update({ status: 'Cancelled' })

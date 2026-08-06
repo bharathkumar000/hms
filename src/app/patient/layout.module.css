@@ -50,7 +50,7 @@
 .mainContent {
   flex: 1;
   padding: 2rem 3rem;
-  overflow-y: auto;
+  overflow-y: auto; overflow-x: hidden;
 }
 
 .header {
@@ -101,3 +101,4 @@
     padding: 1.5rem 1rem;
   }
 }
+

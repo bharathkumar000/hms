@@ -1,3 +1,4 @@
+import { useModal } from '@/components/ModalProvider';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,6 +7,8 @@ import { ShieldAlert, Database, History, Search, Download } from 'lucide-react';
 import styles from '../users/users.module.css';
 
 export default function AdminLogs() {
+  const { showAlert, showConfirm } = useModal();
+
   const [activeTab, setActiveTab] = useState<'audit' | 'system' | 'backup'>('audit');
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [systemLogs, setSystemLogs] = useState<any[]>([]);
@@ -41,7 +44,7 @@ export default function AdminLogs() {
     setIsBackingUp(true);
     setTimeout(() => {
       setIsBackingUp(false);
-      alert('Database backup completed successfully and downloaded securely.');
+      showAlert('Database backup completed successfully and downloaded securely.');
     }, 2000);
   };
 
@@ -93,7 +96,11 @@ export default function AdminLogs() {
         )}
 
         {activeTab === 'audit' && (
-          loading ? <p>Loading audit logs...</p> : (
+          loading ? (
+            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+              Loading audit logs...
+            </div>
+          ) : (
             <div className={styles.tableContainer}>
               <table className={styles.table}>
                 <thead>
@@ -116,7 +123,11 @@ export default function AdminLogs() {
                     </tr>
                   ))}
                   {filteredAuditLogs.length === 0 && (
-                    <tr><td colSpan={5} style={{ textAlign: 'center' }}>No audit logs found.</td></tr>
+                    <tr>
+                      <td colSpan={5} style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-secondary)' }}>
+                        No audit logs available.
+                      </td>
+                    </tr>
                   )}
                 </tbody>
               </table>
@@ -125,7 +136,11 @@ export default function AdminLogs() {
         )}
 
         {activeTab === 'system' && (
-          loading ? <p>Loading system logs...</p> : (
+          loading ? (
+            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+              Loading system logs...
+            </div>
+          ) : (
             <div className={styles.tableContainer}>
               <table className={styles.table}>
                 <thead>
@@ -150,7 +165,11 @@ export default function AdminLogs() {
                     </tr>
                   ))}
                   {filteredSystemLogs.length === 0 && (
-                    <tr><td colSpan={4} style={{ textAlign: 'center' }}>No system logs found.</td></tr>
+                    <tr>
+                      <td colSpan={4} style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-secondary)' }}>
+                        No system logs available.
+                      </td>
+                    </tr>
                   )}
                 </tbody>
               </table>
@@ -159,7 +178,7 @@ export default function AdminLogs() {
         )}
 
         {activeTab === 'backup' && (
-          <div style={{ maxWidth: '600px' }}>
+          <div style={{ maxWidth: '600px', padding: '1rem' }}>
             <h3 style={{ marginBottom: '1rem' }}>Database Backup</h3>
             <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1.5rem', lineHeight: 1.5 }}>
               Generate a full secure backup of all hospital data, including patient records, 
@@ -179,7 +198,7 @@ export default function AdminLogs() {
               Warning: Restoring from a backup will overwrite current database records.
               This action cannot be undone. Please contact system support for restoration procedures.
             </p>
-            <button className={styles.btnOutline} style={{ color: '#dc2626', borderColor: '#dc2626' }} onClick={() => alert('Contacting support...')}>
+            <button className={styles.btnOutline} style={{ color: '#dc2626', borderColor: '#dc2626' }} onClick={() => showAlert('Contacting support...')}>
               Request Restore Assistance
             </button>
           </div>

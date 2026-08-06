@@ -1,3 +1,4 @@
+import { useModal } from '@/components/ModalProvider';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,6 +7,8 @@ import { Download, Activity, FileText, Banknote } from 'lucide-react';
 import styles from './reports.module.css';
 
 export default function ReceptionReports() {
+  const { showAlert, showConfirm } = useModal();
+
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
 
@@ -58,7 +61,7 @@ export default function ReceptionReports() {
   };
 
   const handleExport = () => {
-    alert("Export feature is not supported in the demo version.");
+    showAlert("Export feature is not supported in the demo version.");
   };
 
   return (

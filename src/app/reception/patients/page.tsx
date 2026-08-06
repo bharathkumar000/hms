@@ -1,3 +1,4 @@
+import { useModal } from '@/components/ModalProvider';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -7,6 +8,8 @@ import { User, Plus } from 'lucide-react';
 import styles from './patients.module.css';
 
 export default function ReceptionPatients() {
+  const { showAlert, showConfirm } = useModal();
+
   const [patients, setPatients] = useState<any[]>([]);
   const [filteredPatients, setFilteredPatients] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -89,7 +92,7 @@ export default function ReceptionPatients() {
                   </div>
                 </div>
                 
-                <button className={styles.btnOutline} onClick={() => alert('Editing patient functionality to be implemented as needed.')}>
+                <button className={styles.btnOutline} onClick={() => showAlert('Editing patient functionality to be implemented as needed.')}>
                   Edit Profile
                 </button>
               </div>

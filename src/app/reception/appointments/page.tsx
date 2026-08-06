@@ -1,3 +1,4 @@
+import { useModal } from '@/components/ModalProvider';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,6 +7,8 @@ import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import styles from './appointments.module.css';
 
 export default function ReceptionAppointments() {
+  const { showAlert, showConfirm } = useModal();
+
   const [appointments, setAppointments] = useState<any[]>([]);
   const [filter, setFilter] = useState('Today');
   const [loading, setLoading] = useState(true);
@@ -79,7 +82,7 @@ export default function ReceptionAppointments() {
     });
 
     if (error) {
-      alert('Failed to book appointment: ' + error.message);
+      showAlert('Failed to book appointment: ' + error.message);
     } else {
       setShowModal(false);
       fetchAppointments();
@@ -155,7 +158,7 @@ export default function ReceptionAppointments() {
                   </span>
                   {apt.status === 'Upcoming' && (
                     <div className={styles.actions}>
-                      <button className={styles.btnOutline} onClick={() => alert('Reschedule not yet implemented.')}>
+                      <button className={styles.btnOutline} onClick={() => showAlert('Reschedule not yet implemented.')}>
                         Reschedule
                       </button>
                       <button className={`${styles.btnOutline} ${styles.btnDanger}`} onClick={() => updateStatus(apt.id, 'Cancelled')}>

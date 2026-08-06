@@ -1,3 +1,4 @@
+import { useModal } from '@/components/ModalProvider';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,6 +7,8 @@ import { Plus, Search, Edit2 } from 'lucide-react';
 import styles from './inventory.module.css';
 
 export default function PharmacyInventory() {
+  const { showAlert, showConfirm } = useModal();
+
   const [medicines, setMedicines] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -62,7 +65,7 @@ export default function PharmacyInventory() {
       setFormData({ name: '', category: 'Tablet', manufacturer: '', price_per_unit: 0, minimum_stock_level: 10 });
       fetchInventory();
     } else {
-      alert('Error adding medicine: ' + error.message);
+      showAlert('Error adding medicine: ' + error.message);
     }
   };
 

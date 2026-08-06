@@ -1,3 +1,4 @@
+import { useModal } from '@/components/ModalProvider';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,6 +7,8 @@ import { Pill, Search } from 'lucide-react';
 import styles from './prescriptions.module.css';
 
 export default function DoctorPrescriptions() {
+  const { showAlert, showConfirm } = useModal();
+
   const [patients, setPatients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -45,7 +48,7 @@ export default function DoctorPrescriptions() {
 
   const handleCreatePrescription = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedPatientId) return alert('Please select a patient.');
+    if (!selectedPatientId) return showAlert('Please select a patient.');
 
     setSubmitting(true);
     
@@ -65,7 +68,7 @@ export default function DoctorPrescriptions() {
       });
 
     if (error) {
-      alert('Failed to save prescription.');
+      showAlert('Failed to save prescription.');
     } else {
       setMedicineName('');
       setDosage('');
