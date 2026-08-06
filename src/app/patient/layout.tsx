@@ -13,7 +13,10 @@ import {
   CreditCard,
   Bell,
   Settings,
-  LogOut
+  LogOut,
+  Bed,
+  Utensils,
+  FlaskConical
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import styles from './layout.module.css';
@@ -22,9 +25,12 @@ const navItems = [
   { name: 'Dashboard', href: '/patient/dashboard', icon: LayoutDashboard },
   { name: 'Profile', href: '/patient/profile', icon: UserRound },
   { name: 'Appointments', href: '/patient/appointments', icon: CalendarCheck },
+  { name: 'Admissions', href: '/patient/admission', icon: Bed },
   { name: 'Medical Records', href: '/patient/records', icon: FileText },
+  { name: 'Laboratory', href: '/patient/laboratory', icon: FlaskConical },
   { name: 'Prescription', href: '/patient/pharmacy', icon: Pill },
   { name: 'Billing', href: '/patient/billing', icon: CreditCard },
+  { name: 'Canteen', href: '/patient/canteen', icon: Utensils },
   { name: 'Notifications', href: '/patient/notifications', icon: Bell },
   { name: 'Settings', href: '/patient/settings', icon: Settings },
 ];

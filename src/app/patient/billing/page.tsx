@@ -15,7 +15,10 @@ export default async function BillingPage() {
   // Fetch bills
   const { data: bills } = await supabase
     .from('bills')
-    .select('*')
+    .select(`
+      *,
+      bill_items(description, unit_price, quantity, amount)
+    `)
     .eq('patient_id', user.id)
     .order('created_at', { ascending: false });
 
@@ -44,8 +47,13 @@ export default async function BillingPage() {
                 {bills.map((bill) => (
                   <tr key={bill.id} className={styles.tr}>
                     <td className={styles.td}>{new Date(bill.created_at).toLocaleDateString()}</td>
-                    <td className={styles.td}>{bill.description}</td>
-                    <td className={styles.td}>${parseFloat(bill.amount).toFixed(2)}</td>
+                    <td className={styles.td}>
+                      <strong>{bill.bill_type}</strong>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginTop: '0.2rem' }}>
+                        {bill.bill_items?.length || 0} items
+                      </div>
+                    </td>
+                    <td className={styles.td}>₹{parseFloat(bill.total_amount).toFixed(2)}</td>
                     <td className={styles.td}>
                       <span className={`${styles.status} ${bill.status === 'Paid' ? styles.statusPaid : styles.statusPending}`}>
                         {bill.status}
