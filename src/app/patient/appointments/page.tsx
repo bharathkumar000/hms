@@ -39,7 +39,15 @@ export default function AppointmentsPage() {
         .eq('patient_id', user.id)
         .order('appointment_date', { ascending: false });
       
-      if (data) setAppointments(data);
+      let finalAppointments = data || [];
+      
+      // If demo mode, merge in simulated appointments from local storage
+      if (user.id === 'demo-user-id') {
+        const demoApts = JSON.parse(localStorage.getItem('demo_appointments') || '[]');
+        finalAppointments = [...demoApts, ...finalAppointments].sort((a, b) => new Date(b.appointment_date).getTime() - new Date(a.appointment_date).getTime());
+      }
+      
+      if (finalAppointments.length >= 0) setAppointments(finalAppointments);
     }
   };
 
@@ -101,6 +109,34 @@ export default function AppointmentsPage() {
         const { data: profile } = await supabase.from('profiles').select('id').eq('id', uid).single();
         if (!profile) {
           showAlert('Please complete and save your Profile first before booking an appointment.');
+          setIsSubmitting(false);
+          return;
+        }
+
+        if (uid === 'demo-user-id') {
+          // Simulate Demo Booking in Local Storage to avoid PostgreSQL UUID & RLS errors
+          const selectedDoc = doctors.find(d => d.id === doctorId);
+          const newApt = {
+            id: 'demo-apt-' + Date.now(),
+            patient_id: uid,
+            doctor_id: doctorId,
+            appointment_date: date,
+            appointment_time: time,
+            reason_for_visit: reason,
+            status: 'Upcoming',
+            doctors: selectedDoc
+          };
+          
+          const existing = JSON.parse(localStorage.getItem('demo_appointments') || '[]');
+          localStorage.setItem('demo_appointments', JSON.stringify([newApt, ...existing]));
+          
+          setIsModalOpen(false);
+          setIsRescheduling(null);
+          setDoctorId('');
+          setDate('');
+          setTime('');
+          setReason('');
+          await fetchAppointments();
           setIsSubmitting(false);
           return;
         }

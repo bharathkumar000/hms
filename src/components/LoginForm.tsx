@@ -44,41 +44,17 @@ export default function LoginForm({ portalName, placeholder, moduleKey }: LoginF
     
     try {
       // DEMO AUTHENTICATION LOGIC
-      // This is a temporary layer that checks predefined credentials
       const demoUser = DEMO_USERS[moduleKey as keyof typeof DEMO_USERS];
       
       if (demoUser && loginId === demoUser.id && password === demoUser.pass) {
-        // Set a cookie that will be valid for this session
         document.cookie = `demo_auth=${moduleKey}; path=/; max-age=86400`; // 1 day
-        
-        // Brief success indication (optional, UI remains exactly the same)
-        // Redirect to dashboard
         router.push(`/${moduleKey}/dashboard`);
         return;
       } else {
-        setGeneralError('Invalid Login ID or Password.');
+        // Since we are in strict demo mode, reject anything else
+        setGeneralError('Invalid Demo Credentials. Hint: Use ID 1 and Password 1');
         return;
       }
-      
-      /* 
-      // === ORIGINAL SUPABASE LOGIC (Kept intact for future migration) ===
-      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-        setGeneralError('Supabase is not configured. Please add credentials to .env.local');
-        return;
-      }
-
-      const supabase = createClient();
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: loginId,
-        password: password,
-      });
-
-      if (error) {
-        setGeneralError('Invalid credentials. Please try again.');
-      } else if (data.user) {
-        router.push(`/${moduleKey}/dashboard`);
-      }
-      */
     } catch (err: any) {
       setGeneralError(err.message || 'An unexpected error occurred. Please try again.');
     } finally {

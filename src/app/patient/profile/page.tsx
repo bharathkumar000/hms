@@ -89,6 +89,17 @@ export default function ProfilePage() {
         updated_at: new Date().toISOString()
       };
 
+      // If this is the mock demo user, simulate a successful save to avoid PostgreSQL UUID & RLS errors
+      if (activeUserId === 'demo-user-id') {
+        // We simulate saving to local storage so the form retains the data in demo mode if desired,
+        // but for now, we just show the success message.
+        setTimeout(() => {
+          setMessage({ text: 'Profile updated successfully! (Demo Mode)', type: 'success' });
+          setSaving(false);
+        }, 800);
+        return;
+      }
+
       const { error } = await supabase
         .from('profiles')
         .upsert(cleanData);
