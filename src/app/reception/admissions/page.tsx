@@ -17,7 +17,14 @@ export default function ReceptionAdmissions() {
   const [showModal, setShowModal] = useState(false);
   const [patients, setPatients] = useState<any[]>([]);
   const [doctors, setDoctors] = useState<any[]>([]);
+  
+  const [wards, setWards] = useState<any[]>([]);
+  const [rooms, setRooms] = useState<any[]>([]);
   const [beds, setBeds] = useState<any[]>([]);
+  
+  // Selection States
+  const [selectedWard, setSelectedWard] = useState('');
+  const [selectedRoom, setSelectedRoom] = useState('');
   
   // Form State
   const [patientId, setPatientId] = useState('');
@@ -35,7 +42,7 @@ export default function ReceptionAdmissions() {
     setLoading(true);
     let query = supabase
       .from('admissions')
-      .select('*, profiles(first_name, last_name), doctors(first_name, last_name), beds(bed_number, rooms(room_number, wards(ward_name)))')
+      .select('*, profiles(first_name, last_name), doctors(first_name, last_name), beds(bed_number, rooms(room_number, wards(name)))')
       .order('admission_date', { ascending: false });
 
     if (filter === 'Active') {
@@ -51,16 +58,23 @@ export default function ReceptionAdmissions() {
 
   const openAdmitModal = async () => {
     // Fetch lookup data
-    const [pts, docs, bds] = await Promise.all([
+    const [pts, docs, wds, rms, bds] = await Promise.all([
       supabase.from('profiles').select('id, first_name, last_name').order('first_name'),
       supabase.from('doctors').select('id, first_name, last_name, specialization').order('first_name'),
-      supabase.from('beds').select('id, bed_number, rooms(room_number, wards(ward_name))')
+      supabase.from('wards').select('id, name, type'),
+      supabase.from('rooms').select('id, ward_id, room_number'),
+      supabase.from('beds').select('id, room_id, bed_number')
     ]);
     
     if (pts.data) setPatients(pts.data);
     if (docs.data) setDoctors(docs.data);
+    if (wds.data) setWards(wds.data);
+    if (rms.data) setRooms(rms.data);
     if (bds.data) setBeds(bds.data);
     
+    setSelectedWard('');
+    setSelectedRoom('');
+    setBedId('');
     setShowModal(true);
   };
 
@@ -150,7 +164,7 @@ export default function ReceptionAdmissions() {
                     Doctor: Dr. {adm.doctors?.first_name} {adm.doctors?.last_name}
                   </div>
                   <div className={styles.itemSub}>
-                    Location: Ward {adm.beds?.rooms?.wards?.ward_name}, Room {adm.beds?.rooms?.room_number}, Bed {adm.beds?.bed_number}
+                    Location: Ward {adm.beds?.rooms?.wards?.name}, Room {adm.beds?.rooms?.room_number}, Bed {adm.beds?.bed_number}
                   </div>
                   <div className={styles.dateTime} style={{ marginTop: '0.25rem' }}>
                     <ClipboardList size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'text-bottom' }}/>
@@ -200,13 +214,32 @@ export default function ReceptionAdmissions() {
               </div>
 
               <div className={styles.formGroup}>
+                <label className={styles.label}>Select Ward & Floor</label>
+                <select className={styles.input} required value={selectedWard} onChange={e => { setSelectedWard(e.target.value); setSelectedRoom(''); setBedId(''); }}>
+                  <option value="">Select Ward...</option>
+                  {wards.length === 0 && <option value="" disabled>No wards available</option>}
+                  {wards.map(w => (
+                    <option key={w.id} value={w.id}>{w.name} ({w.type})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Select Room</label>
+                <select className={styles.input} required disabled={!selectedWard} value={selectedRoom} onChange={e => { setSelectedRoom(e.target.value); setBedId(''); }}>
+                  <option value="">Select Room...</option>
+                  {rooms.filter(r => r.ward_id === selectedWard).map(r => (
+                    <option key={r.id} value={r.id}>Room {r.room_number}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={styles.formGroup}>
                 <label className={styles.label}>Assign Bed</label>
-                <select className={styles.input} required value={bedId} onChange={e => setBedId(e.target.value)}>
+                <select className={styles.input} required disabled={!selectedRoom} value={bedId} onChange={e => setBedId(e.target.value)}>
                   <option value="">Select Bed...</option>
-                  {beds.map(b => (
-                    <option key={b.id} value={b.id}>
-                      Ward {b.rooms?.wards?.ward_name} - Room {b.rooms?.room_number} - Bed {b.bed_number}
-                    </option>
+                  {beds.filter(b => b.room_id === selectedRoom).map(b => (
+                    <option key={b.id} value={b.id}>Bed {b.bed_number}</option>
                   ))}
                 </select>
               </div>

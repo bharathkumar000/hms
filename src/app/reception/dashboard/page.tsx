@@ -115,31 +115,7 @@ export default async function ReceptionDashboard() {
         </div>
       </div>
 
-      <div className={styles.grid}>
-        {/* Quick Actions */}
-        <div className={styles.card}>
-          <h2 className={styles.cardTitle} style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>
-            Quick Actions
-          </h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <Link href="/reception/registration" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '1rem', backgroundColor: 'var(--color-background)', borderRadius: 'var(--radius-md)', textDecoration: 'none', color: 'var(--color-text)' }}>
-              <UserPlus size={20} color="var(--color-primary)" />
-              <span style={{ fontWeight: '500' }}>Register New Patient</span>
-            </Link>
-            <Link href="/reception/appointments" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '1rem', backgroundColor: 'var(--color-background)', borderRadius: 'var(--radius-md)', textDecoration: 'none', color: 'var(--color-text)' }}>
-              <Calendar size={20} color="var(--color-primary)" />
-              <span style={{ fontWeight: '500' }}>Book Appointment</span>
-            </Link>
-            <Link href="/reception/admissions" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '1rem', backgroundColor: 'var(--color-background)', borderRadius: 'var(--radius-md)', textDecoration: 'none', color: 'var(--color-text)' }}>
-              <ClipboardList size={20} color="var(--color-primary)" />
-              <span style={{ fontWeight: '500' }}>Admit Patient</span>
-            </Link>
-            <Link href="/reception/billing" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '1rem', backgroundColor: 'var(--color-background)', borderRadius: 'var(--radius-md)', textDecoration: 'none', color: 'var(--color-text)' }}>
-              <CreditCard size={20} color="var(--color-primary)" />
-              <span style={{ fontWeight: '500' }}>Process Billing</span>
-            </Link>
-          </div>
-        </div>
+      <div className={styles.grid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))' }}>
 
         {/* Live Queue Overview */}
         <div className={styles.card}>
