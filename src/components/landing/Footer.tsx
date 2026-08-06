@@ -31,10 +31,10 @@ export default function Footer() {
         <div className={styles.column}>
           <h4>Quick Links</h4>
           <div className={styles.links}>
-            <Link href="#about">About Us</Link>
-            <Link href="#services">Our Services</Link>
-            <Link href="#departments">Departments</Link>
-            <Link href="#doctors">Find a Doctor</Link>
+            <a href="#about">About Us</a>
+            <a href="#services">Our Services</a>
+            <a href="#departments">Departments</a>
+            <a href="#doctors">Find a Doctor</a>
             <Link href="/portals">Portal Login</Link>
           </div>
         </div>
@@ -43,11 +43,11 @@ export default function Footer() {
         <div className={styles.column}>
           <h4>Departments</h4>
           <div className={styles.links}>
-            <Link href="#departments">Cardiology</Link>
-            <Link href="#departments">Neurology</Link>
-            <Link href="#departments">Orthopedics</Link>
-            <Link href="#departments">Pediatrics</Link>
-            <Link href="#departments">Emergency</Link>
+            <a href="#departments">Cardiology</a>
+            <a href="#departments">Neurology</a>
+            <a href="#departments">Orthopedics</a>
+            <a href="#departments">Pediatrics</a>
+            <a href="#departments">Emergency</a>
           </div>
         </div>
 

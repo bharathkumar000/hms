@@ -17,14 +17,14 @@ export default function Navbar() {
 
         {/* Desktop Links */}
         <nav className={styles.navLinks}>
-          <Link href="#home" className={styles.navLink}>Home</Link>
-          <Link href="#about" className={styles.navLink}>About</Link>
-          <Link href="#services" className={styles.navLink}>Services</Link>
-          <Link href="#departments" className={styles.navLink}>Departments</Link>
-          <Link href="#features" className={styles.navLink}>Features</Link>
-          <Link href="#doctors" className={styles.navLink}>Doctors</Link>
-          <Link href="#testimonials" className={styles.navLink}>Testimonials</Link>
-          <Link href="#contact" className={styles.navLink}>Contact</Link>
+          <a href="#home" className={styles.navLink}>Home</a>
+          <a href="#about" className={styles.navLink}>About</a>
+          <a href="#services" className={styles.navLink}>Services</a>
+          <a href="#departments" className={styles.navLink}>Departments</a>
+          <a href="#features" className={styles.navLink}>Features</a>
+          <a href="#doctors" className={styles.navLink}>Doctors</a>
+          <a href="#testimonials" className={styles.navLink}>Testimonials</a>
+          <a href="#contact" className={styles.navLink}>Contact</a>
         </nav>
 
         {/* Desktop Actions */}
