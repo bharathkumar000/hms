@@ -44,7 +44,9 @@ export default function AppointmentsPage() {
       // If demo mode, merge in simulated appointments from local storage
       if (user.id === 'demo-user-id') {
         const demoApts = JSON.parse(localStorage.getItem('demo_appointments') || '[]');
-        finalAppointments = [...demoApts, ...finalAppointments].sort((a, b) => new Date(b.appointment_date).getTime() - new Date(a.appointment_date).getTime());
+        // Filter out Cancelled appointments for demo mode as requested
+        const activeDemoApts = demoApts.filter((apt: any) => apt.status !== 'Cancelled');
+        finalAppointments = [...activeDemoApts, ...finalAppointments].sort((a, b) => new Date(b.appointment_date).getTime() - new Date(a.appointment_date).getTime());
       }
       
       if (finalAppointments.length >= 0) setAppointments(finalAppointments);
