@@ -108,6 +108,29 @@ export default function ReceptionAppointments() {
   const updateStatus = async (id: string, newStatus: string) => {
     const { error } = await supabase.from('appointments').update({ status: newStatus }).eq('id', id);
     if (!error) fetchAppointments();
+    else showAlert('Error updating status: ' + error.message);
+  };
+
+  const handleCheckIn = async (appointment: any) => {
+    // Generate a simple token number like A-101
+    const tokenStr = `T-${Math.floor(Math.random() * 900) + 100}`;
+    
+    const { error } = await supabase.from('patient_queue').insert({
+      patient_id: appointment.patient_id,
+      department: appointment.doctors?.specialization || 'General',
+      status: 'Waiting',
+      token_number: tokenStr,
+      appointment_id: appointment.id
+    });
+    
+    if (error) {
+      showAlert('Failed to generate token: ' + error.message);
+      return;
+    }
+    
+    // Update appointment status to 'Waiting' or 'Checked-In'
+    await updateStatus(appointment.id, 'Waiting');
+    showAlert(`Patient checked in. Token Number: ${tokenStr}`);
   };
 
   const getStatusClass = (status: string) => {
@@ -166,6 +189,11 @@ export default function ReceptionAppointments() {
                   <span className={`${styles.status} ${getStatusClass(apt.status)}`}>
                     {apt.status}
                   </span>
+                  {apt.status === 'Upcoming' && apt.appointment_date === new Date().toISOString().split('T')[0] && (
+                    <button className={styles.btnPrimary} onClick={() => handleCheckIn(apt)}>
+                      Check-In (Generate Token)
+                    </button>
+                  )}
                   {apt.status === 'Upcoming' && (
                     <div className={styles.actions}>
                       <button className={styles.btnOutline} onClick={() => showAlert('Reschedule not yet implemented.')}>

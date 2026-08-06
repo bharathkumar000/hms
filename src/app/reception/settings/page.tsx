@@ -18,6 +18,14 @@ export default function ReceptionSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [userId, setUserId] = useState('');
+  
+  // Notification Preferences
+  const [emailNotifs, setEmailNotifs] = useState(true);
+  const [smsNotifs, setSmsNotifs] = useState(true);
+  
+  // Password State
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const supabase = createClient();
 
@@ -59,10 +67,30 @@ export default function ReceptionSettings() {
         ...profile
       }, { onConflict: 'user_id' });
 
+    // If password provided, update it
+    if (password) {
+      if (password !== confirmPassword) {
+        showAlert('Passwords do not match!');
+        setSaving(false);
+        return;
+      }
+      
+      const { error: passError } = await supabase.auth.updateUser({
+        password: password
+      });
+      
+      if (passError) {
+        showAlert('Failed to update password: ' + passError.message);
+      } else {
+        setPassword('');
+        setConfirmPassword('');
+      }
+    }
+
     if (error) {
       showAlert('Error updating profile: ' + error.message);
     } else {
-      showAlert('Profile updated successfully!');
+      showAlert('Profile and preferences updated successfully!');
     }
     
     setSaving(false);
@@ -133,6 +161,65 @@ export default function ReceptionSettings() {
                   value={profile.email} 
                   onChange={e => setProfile({...profile, email: e.target.value})} 
                 />
+              </div>
+            </div>
+
+            <div className={styles.formGroupFull} style={{ marginTop: '2rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+               <div>
+                 <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Change Password</h2>
+                 <p className={styles.details} style={{ marginTop: 0 }}>Leave blank if you do not wish to change your password.</p>
+               </div>
+            </div>
+            
+            <div className={styles.formGrid}>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>New Password</label>
+                <input 
+                  type="password" 
+                  className={styles.input} 
+                  value={password} 
+                  onChange={e => setPassword(e.target.value)} 
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Confirm New Password</label>
+                <input 
+                  type="password" 
+                  className={styles.input} 
+                  value={confirmPassword} 
+                  onChange={e => setConfirmPassword(e.target.value)} 
+                />
+              </div>
+            </div>
+            
+            <div className={styles.formGroupFull} style={{ marginTop: '2rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+               <div>
+                 <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Notification Preferences</h2>
+                 <p className={styles.details} style={{ marginTop: 0 }}>Choose how you want to be notified.</p>
+               </div>
+            </div>
+            
+            <div className={styles.formGrid}>
+              <div className={styles.formGroup} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input 
+                  type="checkbox" 
+                  id="emailNotifs"
+                  checked={emailNotifs} 
+                  onChange={e => setEmailNotifs(e.target.checked)} 
+                  style={{ width: 'auto' }}
+                />
+                <label htmlFor="emailNotifs" className={styles.label} style={{ margin: 0 }}>Receive Email Notifications</label>
+              </div>
+              
+              <div className={styles.formGroup} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input 
+                  type="checkbox" 
+                  id="smsNotifs"
+                  checked={smsNotifs} 
+                  onChange={e => setSmsNotifs(e.target.checked)} 
+                  style={{ width: 'auto' }}
+                />
+                <label htmlFor="smsNotifs" className={styles.label} style={{ margin: 0 }}>Receive SMS Alerts</label>
               </div>
             </div>
 
