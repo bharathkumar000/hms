@@ -59,5 +59,8 @@ CREATE POLICY "Enable insert for all users" ON public.menu_items FOR INSERT WITH
 CREATE POLICY "Enable update for all users" ON public.menu_items FOR UPDATE USING (true);
 CREATE POLICY "Enable delete for all users" ON public.menu_items FOR DELETE USING (true);
 
+CREATE POLICY "Enable insert for all users" ON public.food_categories FOR INSERT WITH CHECK (true);
+CREATE POLICY "Enable update for all users" ON public.food_categories FOR UPDATE USING (true);
+
 CREATE POLICY "Enable insert for all users" ON public.canteen_orders FOR INSERT WITH CHECK (true);
 CREATE POLICY "Enable update for all users" ON public.canteen_orders FOR UPDATE USING (true);

@@ -15,6 +15,7 @@ export default function MenuManagement() {
   const { showAlert, showConfirm } = useModal();
   const supabase = createClient();
   const [menuItems, setMenuItems] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Modal State
@@ -30,8 +31,12 @@ export default function MenuManagement() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchMenu = async () => {
+    const { data: cats } = await supabase.from('food_categories').select('*');
+    if (cats) setCategories(cats);
+
     const { data } = await supabase.from('menu_items').select('*').order('name');
     if (data) setMenuItems(data);
+    
     setLoading(false);
   };
 
@@ -67,6 +72,18 @@ export default function MenuManagement() {
     setIsSubmitting(true);
 
     try {
+      // Find or create the category in food_categories
+      let catId = categories.find(c => c.name === formData.category)?.id;
+      
+      if (!catId) {
+        // If it doesn't exist, try to insert it (assuming RLS allows, or we just silently fail and leave it null if constraint is dropped)
+        const { data: newCat, error: catErr } = await supabase.from('food_categories').insert({ name: formData.category }).select().single();
+        if (newCat) {
+          catId = newCat.id;
+          setCategories(prev => [...prev, newCat]);
+        }
+      }
+
       if (editingItem) {
         const { error } = await supabase.from('menu_items')
           .update({
@@ -74,6 +91,7 @@ export default function MenuManagement() {
             description: formData.description,
             price: Number(formData.price),
             category: formData.category,
+            category_id: catId || undefined,
             is_available: formData.is_available
           })
           .eq('id', editingItem);
@@ -87,14 +105,10 @@ export default function MenuManagement() {
             description: formData.description,
             price: Number(formData.price),
             category: formData.category,
-            is_available: formData.is_available,
-            category_id: '00000000-0000-0000-0000-000000000000' // Stub since we use 'category' text now
+            category_id: catId || undefined,
+            is_available: formData.is_available
           }]);
         
-        // Note: category_id was required in old schema, but we added 'category' text. 
-        // We'll just fetch a dummy category or handle the DB error.
-        // Actually let's fetch a category first or just insert.
-        // If there's an error due to FK, we'll see it.
         if (error) throw error;
         showAlert('Menu item created successfully');
       }
