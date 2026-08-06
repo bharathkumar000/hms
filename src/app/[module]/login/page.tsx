@@ -5,7 +5,8 @@ import {
   FlaskConical, 
   Pill, 
   ShieldCheck,
-  Hospital
+  Hospital,
+  Receipt
 } from 'lucide-react';
 import styles from './login.module.css';
 import LoginForm from '@/components/LoginForm';
@@ -41,6 +42,11 @@ const PORTAL_CONFIG: Record<string, any> = {
     name: 'Admin Portal',
     icon: ShieldCheck,
     placeholder: 'Enter Admin ID'
+  },
+  billing: {
+    name: 'Billing & Finance Portal',
+    icon: Receipt,
+    placeholder: 'Enter Billing ID'
   }
 };
 

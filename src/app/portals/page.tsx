@@ -9,7 +9,8 @@ import {
   ClipboardList, 
   FlaskConical, 
   Pill, 
-  ShieldCheck 
+  ShieldCheck,
+  Receipt
 } from 'lucide-react';
 
 const modules = [
@@ -48,6 +49,12 @@ const modules = [
     description: 'Monitor hospital operations, manage staff roles, and configure system settings.',
     icon: ShieldCheck,
     href: '/admin/login'
+  },
+  {
+    title: 'Billing & Finance Portal',
+    description: 'Manage Billing, Payments, Revenue & Financial Records',
+    icon: Receipt,
+    href: '/billing/login'
   }
 ];
 

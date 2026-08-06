@@ -96,14 +96,33 @@ CREATE TABLE IF NOT EXISTS public.bills (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   patient_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
   appointment_id UUID REFERENCES public.appointments(id) ON DELETE SET NULL,
-  amount DECIMAL(10, 2) NOT NULL,
+  amount DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  subtotal DECIMAL(10, 2) DEFAULT 0,
+  tax DECIMAL(10, 2) DEFAULT 0,
+  discount DECIMAL(10, 2) DEFAULT 0,
+  total_amount DECIMAL(10, 2) DEFAULT 0,
+  amount_paid DECIMAL(10, 2) DEFAULT 0,
   description TEXT,
-  bill_type TEXT DEFAULT 'General', -- General, Pharmacy
-  status TEXT DEFAULT 'Pending', -- Pending, Paid
+  bill_type TEXT DEFAULT 'General', -- General, Pharmacy, Laboratory, Consultation
+  status TEXT DEFAULT 'Pending', -- Pending, Partially Paid, Paid
   due_date DATE,
+  invoice_number TEXT UNIQUE,
   invoice_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Bill Items table (for detailed invoice generation)
+CREATE TABLE IF NOT EXISTS public.bill_items (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  bill_id UUID REFERENCES public.bills(id) ON DELETE CASCADE NOT NULL,
+  item_name TEXT NOT NULL,
+  item_type TEXT NOT NULL, -- Consultation, Laboratory, Pharmacy, Registration, Other
+  quantity INTEGER DEFAULT 1,
+  unit_price DECIMAL(10, 2) NOT NULL,
+  amount DECIMAL(10, 2) NOT NULL,
+  reference_id UUID, -- Optional link to prescription_id, lab_order_id, etc.
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 -- Payments table
@@ -115,6 +134,18 @@ CREATE TABLE IF NOT EXISTS public.payments (
   payment_method TEXT NOT NULL,
   payment_date TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   transaction_id TEXT
+);
+
+-- Refunds table
+CREATE TABLE IF NOT EXISTS public.refunds (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  payment_id UUID REFERENCES public.payments(id) ON DELETE CASCADE NOT NULL,
+  amount DECIMAL(10, 2) NOT NULL,
+  reason TEXT,
+  status TEXT DEFAULT 'Pending', -- Pending, Approved, Rejected
+  processed_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 -- Notifications table
@@ -223,7 +254,9 @@ ALTER TABLE public.medical_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.prescriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.bills ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.bill_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.refunds ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.doctors ENABLE ROW LEVEL SECURITY;
 
@@ -262,9 +295,21 @@ CREATE POLICY "Users can view own prescriptions" ON public.prescriptions FOR SEL
 DROP POLICY IF EXISTS "Users can view own bills" ON public.bills;
 CREATE POLICY "Users can view own bills" ON public.bills FOR SELECT USING (auth.uid() = patient_id);
 
+-- Patients can read their own bill items (through bills)
+DROP POLICY IF EXISTS "Users can view own bill items" ON public.bill_items;
+CREATE POLICY "Users can view own bill items" ON public.bill_items FOR SELECT USING (
+  EXISTS (SELECT 1 FROM public.bills WHERE bills.id = bill_items.bill_id AND bills.patient_id = auth.uid())
+);
+
 -- Patients can read their own payments
 DROP POLICY IF EXISTS "Users can view own payments" ON public.payments;
 CREATE POLICY "Users can view own payments" ON public.payments FOR SELECT USING (auth.uid() = patient_id);
+
+-- Patients can read their own refunds (through payments)
+DROP POLICY IF EXISTS "Users can view own refunds" ON public.refunds;
+CREATE POLICY "Users can view own refunds" ON public.refunds FOR SELECT USING (
+  EXISTS (SELECT 1 FROM public.payments WHERE payments.id = refunds.payment_id AND payments.patient_id = auth.uid())
+);
 
 -- Patients can read and update their own notifications
 DROP POLICY IF EXISTS "Users can view own notifications" ON public.notifications;
@@ -340,8 +385,12 @@ DROP POLICY IF EXISTS "Reception staff full access patient_queue" ON public.pati
 CREATE POLICY "Reception staff full access patient_queue" ON public.patient_queue FOR ALL USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "Reception staff full access bills" ON public.bills;
 CREATE POLICY "Reception staff full access bills" ON public.bills FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Reception staff full access bill_items" ON public.bill_items;
+CREATE POLICY "Reception staff full access bill_items" ON public.bill_items FOR ALL USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "Reception staff full access payments" ON public.payments;
 CREATE POLICY "Reception staff full access payments" ON public.payments FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Reception staff full access refunds" ON public.refunds;
+CREATE POLICY "Reception staff full access refunds" ON public.refunds FOR ALL USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "Reception staff view own profile" ON public.reception_staff;
 CREATE POLICY "Reception staff view own profile" ON public.reception_staff FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Reception staff update own profile" ON public.reception_staff;
@@ -567,3 +616,32 @@ DROP POLICY IF EXISTS "Admins full access lab_staff" ON public.lab_staff;
 CREATE POLICY "Admins full access lab_staff" ON public.lab_staff FOR ALL USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "Admins full access profiles" ON public.profiles;
 CREATE POLICY "Admins full access profiles" ON public.profiles FOR ALL USING (true) WITH CHECK (true);
+
+-- --------------------------------------------------------
+-- BILLING PORTAL TABLES & POLICIES
+-- --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.billing_staff (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.billing_staff ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Billing staff full access" ON public.billing_staff;
+CREATE POLICY "Billing staff full access" ON public.billing_staff FOR ALL USING (true) WITH CHECK (true);
+
+-- Billing staff get full access to all financial tables
+DROP POLICY IF EXISTS "Billing staff full access bills" ON public.bills;
+CREATE POLICY "Billing staff full access bills" ON public.bills FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Billing staff full access bill_items" ON public.bill_items;
+CREATE POLICY "Billing staff full access bill_items" ON public.bill_items FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Billing staff full access payments" ON public.payments;
+CREATE POLICY "Billing staff full access payments" ON public.payments FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Billing staff full access refunds" ON public.refunds;
+CREATE POLICY "Billing staff full access refunds" ON public.refunds FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Billing staff full access profiles" ON public.profiles;
+CREATE POLICY "Billing staff full access profiles" ON public.profiles FOR ALL USING (true) WITH CHECK (true);
