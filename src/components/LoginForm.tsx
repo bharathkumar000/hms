@@ -52,7 +52,7 @@ export default function LoginForm({ portalName, placeholder, moduleKey }: LoginF
         return;
       } else {
         // Since we are in strict demo mode, reject anything else
-        setGeneralError('Invalid Demo Credentials. Hint: Use ID 1 and Password 1');
+        setGeneralError(`Invalid Demo Credentials. Hint: Use ID ${demoUser?.id || 1} and Password ${demoUser?.pass || 1}`);
         return;
       }
     } catch (err: any) {
