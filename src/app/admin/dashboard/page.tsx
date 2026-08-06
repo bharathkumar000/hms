@@ -139,22 +139,6 @@ export default async function AdminDashboard() {
       </div>
 
       <div className={styles.grid}>
-        {/* Quick Actions */}
-        <div className={styles.card}>
-          <h2 className={styles.sectionTitle}>Quick Actions</h2>
-          <div className={styles.quickActions}>
-            <Link href="/admin/users?tab=doctors" className={styles.actionBtn}>
-              <UserPlus size={18} /> Add User
-            </Link>
-            <Link href="/admin/departments" className={styles.actionBtn}>
-              <Building2 size={18} /> Manage Departments
-            </Link>
-            <Link href="/admin/appointments" className={styles.actionBtn}>
-              <Calendar size={18} /> View Appointments
-            </Link>
-          </div>
-        </div>
-
         {/* Recent System Activity */}
         <div className={styles.card}>
           <h2 className={styles.sectionTitle}>Recent Activity</h2>
