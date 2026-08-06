@@ -19,12 +19,15 @@ import styles from './layout.module.css';
 
 const navItems = [
   { name: 'Dashboard', href: '/reception/dashboard', icon: LayoutDashboard },
-  { name: 'Patients', href: '/reception/patients', icon: Users },
+  { name: 'Patient Registration', href: '/reception/registration', icon: Users },
   { name: 'Appointments', href: '/reception/appointments', icon: Calendar },
-  { name: 'Queue Status', href: '/reception/queue', icon: ListOrdered },
-  { name: 'Billing', href: '/reception/billing', icon: CreditCard },
+  { name: 'Admission Management', href: '/reception/admissions', icon: ClipboardList },
+  { name: 'Patient Directory', href: '/reception/patients', icon: Users },
+  { name: 'Billing Coordination', href: '/reception/billing', icon: CreditCard },
+  { name: 'Doctor & Departments', href: '/reception/doctors', icon: ListOrdered },
   { name: 'Notifications', href: '/reception/notifications', icon: Bell },
-  { name: 'Settings', href: '/reception/settings', icon: Settings },
+  { name: 'Reports', href: '/reception/reports', icon: ClipboardList },
+  { name: 'Profile', href: '/reception/settings', icon: Settings },
 ];
 
 export default function ReceptionLayout({ children }: { children: React.ReactNode }) {

@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { ArrowLeft, CheckCircle } from 'lucide-react';
-import styles from '../patients.module.css';
+import styles from './registration.module.css';
 
 export default function RegisterPatient() {
   const { showAlert, showConfirm } = useModal();
