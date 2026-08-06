@@ -54,10 +54,10 @@ CREATE POLICY "Enable read access for all authenticated users" ON public.canteen
 CREATE POLICY "Enable insert for all authenticated users" ON public.canteen_settings FOR INSERT TO authenticated WITH CHECK (true);
 CREATE POLICY "Enable update for all authenticated users" ON public.canteen_settings FOR UPDATE TO authenticated USING (true);
 
--- 5. Fix RLS for menu_items and canteen_orders for Canteen Portal Operations
-CREATE POLICY "Enable insert for all authenticated users" ON public.menu_items FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "Enable update for all authenticated users" ON public.menu_items FOR UPDATE TO authenticated USING (true);
-CREATE POLICY "Enable delete for all authenticated users" ON public.menu_items FOR DELETE TO authenticated USING (true);
+-- 5. Fix RLS for menu_items and canteen_orders for Canteen Portal Operations (Allowing Demo Mode / Anon)
+CREATE POLICY "Enable insert for all users" ON public.menu_items FOR INSERT WITH CHECK (true);
+CREATE POLICY "Enable update for all users" ON public.menu_items FOR UPDATE USING (true);
+CREATE POLICY "Enable delete for all users" ON public.menu_items FOR DELETE USING (true);
 
-CREATE POLICY "Enable insert for all authenticated users" ON public.canteen_orders FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "Enable update for all authenticated users" ON public.canteen_orders FOR UPDATE TO authenticated USING (true);
+CREATE POLICY "Enable insert for all users" ON public.canteen_orders FOR INSERT WITH CHECK (true);
+CREATE POLICY "Enable update for all users" ON public.canteen_orders FOR UPDATE USING (true);
