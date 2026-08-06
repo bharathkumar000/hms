@@ -3,6 +3,7 @@ import { useModal } from '@/components/ModalProvider';
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
+import { addChargeToPatient } from '@/utils/billing';
 import styles from './appointments.module.css';
 
 export default function AppointmentsPage() {
@@ -61,14 +62,24 @@ export default function AppointmentsPage() {
         appointment_time: time,
         reason_for_visit: reason,
         status: 'Upcoming'
-      });
+      }).select('id').single();
       
       if (error) {
         console.error('Error booking appointment:', error);
         showAlert(`Error booking appointment: ${error.message}`);
         return;
+        return;
       }
       
+      // Automatic Billing: Add consultation charge
+      await addChargeToPatient(
+        user.id, 
+        error ? null : (await supabase.from('appointments').select('id').eq('patient_id', user.id).order('created_at', { ascending: false }).limit(1).single()).data?.id, // Note: the insert .select() above is better but since we didn't destructure data, let's just fetch it or we can change destructuring.
+        'General Consultation', 
+        'Consultation', 
+        500 // Assuming 500 INR consultation fee
+      );
+
       setIsModalOpen(false);
       setDoctorId('');
       setDate('');

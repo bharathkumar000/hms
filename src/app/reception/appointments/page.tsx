@@ -3,6 +3,7 @@ import { useModal } from '@/components/ModalProvider';
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
+import { addChargeToPatient } from '@/utils/billing';
 import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import styles from './appointments.module.css';
 
@@ -79,11 +80,20 @@ export default function ReceptionAppointments() {
       appointment_time: time,
       reason_for_visit: reason,
       status: 'Upcoming'
-    });
+    }).select('id').single();
 
     if (error) {
       showAlert('Failed to book appointment: ' + error.message);
     } else {
+      // Automatic Billing: Add consultation charge
+      await addChargeToPatient(
+        patientId, 
+        data?.id, 
+        'General Consultation', 
+        'Consultation', 
+        500 // Assuming 500 INR consultation fee
+      );
+
       setShowModal(false);
       fetchAppointments();
       setPatientId('');

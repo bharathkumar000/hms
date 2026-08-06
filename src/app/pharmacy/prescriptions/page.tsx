@@ -3,6 +3,7 @@ import { useModal } from '@/components/ModalProvider';
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
+import { addChargeToPatient } from '@/utils/billing';
 import { ClipboardList, AlertCircle, CheckCircle } from 'lucide-react';
 import styles from './prescriptions.module.css';
 
@@ -60,7 +61,7 @@ export default function PharmacyPrescriptions() {
     // Fetch available batches with stock > 0
     const { data: batches } = await supabase
       .from('medicine_batches')
-      .select('*, medicines(name)')
+      .select('*, medicines(name, price_per_unit)')
       .gt('quantity', 0)
       .order('expiry_date', { ascending: true }); // FEFO (First Expire First Out)
       
@@ -108,6 +109,18 @@ export default function PharmacyPrescriptions() {
       pharmacist_id: pharmacistId || null,
       dispense_date: new Date().toISOString()
     }).eq('id', selectedPrescription.id);
+
+    // 4. Automatic Billing: Add medicine charge
+    if (selectedPrescription.patient_id) {
+      await addChargeToPatient(
+        selectedPrescription.patient_id, 
+        selectedPrescription.appointment_id || null, 
+        `Pharmacy: ${batch.medicines?.name} (Batch: ${batch.batch_number})`, 
+        'Pharmacy', 
+        Number(batch.medicines?.price_per_unit || 0),
+        dispenseQty
+      );
+    }
 
     setShowModal(false);
     fetchPrescriptions();

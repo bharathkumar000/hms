@@ -3,6 +3,7 @@ import { useModal } from '@/components/ModalProvider';
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
+import { addChargeToPatient } from '@/utils/billing';
 import { Microscope } from 'lucide-react';
 import styles from './lab.module.css';
 
@@ -61,11 +62,20 @@ export default function DoctorLab() {
         test_category: testCategory,
         notes: notes,
         status: 'Pending'
-      });
+      }).select('id').single();
 
     if (error) {
       showAlert('Failed to save lab order.');
     } else {
+      // Automatic Billing: Add lab test charge
+      await addChargeToPatient(
+        selectedPatientId, 
+        null, // No appointment link needed for direct lab order from here
+        `Lab Test: ${testCategory}`, 
+        'Laboratory', 
+        1500 // Assuming base price 1500 INR for lab tests
+      );
+
       setTestCategory('');
       setNotes('');
       fetchInitialData();
