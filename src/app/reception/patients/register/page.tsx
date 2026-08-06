@@ -1,5 +1,5 @@
-import { useModal } from '@/components/ModalProvider';
 'use client';
+import { useModal } from '@/components/ModalProvider';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';

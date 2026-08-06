@@ -1,5 +1,5 @@
-import { useModal } from '@/components/ModalProvider';
 'use client';
+import { useModal } from '@/components/ModalProvider';
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
