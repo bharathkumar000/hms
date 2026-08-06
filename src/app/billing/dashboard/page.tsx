@@ -114,45 +114,49 @@ export default function BillingDashboard() {
       </header>
 
       {/* Metrics Grid */}
-      <div className={styles.metricsGrid}>
-        <div className={styles.metricCard}>
-          <div className={styles.metricIcon} style={{ background: '#ecfdf5', color: '#10b981' }}>
-            <IndianRupee size={24} />
+      <div className={styles.grid}>
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <div className={styles.iconWrapperSuccess}>
+              <IndianRupee size={24} />
+            </div>
+            <h2 className={styles.cardTitle}>Today's Revenue</h2>
           </div>
-          <div className={styles.metricInfo}>
-            <h3>Today's Revenue</h3>
-            <p className={styles.metricValue}>₹{metrics.todayRevenue.toFixed(2)}</p>
-          </div>
-        </div>
-
-        <div className={styles.metricCard}>
-          <div className={styles.metricIcon} style={{ background: '#eff6ff', color: '#3b82f6' }}>
-            <TrendingUp size={24} />
-          </div>
-          <div className={styles.metricInfo}>
-            <h3>Monthly Revenue</h3>
-            <p className={styles.metricValue}>₹{metrics.monthlyRevenue.toFixed(2)}</p>
+          <div className={styles.statValue} style={{ color: '#166534' }}>
+            ₹{metrics.todayRevenue.toFixed(2)}
           </div>
         </div>
 
-        <div className={styles.metricCard}>
-          <div className={styles.metricIcon} style={{ background: '#fffbeb', color: '#f59e0b' }}>
-            <Clock size={24} />
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <div className={styles.iconWrapper}>
+              <TrendingUp size={24} />
+            </div>
+            <h2 className={styles.cardTitle}>Monthly Revenue</h2>
           </div>
-          <div className={styles.metricInfo}>
-            <h3>Pending Bills</h3>
-            <p className={styles.metricValue}>{metrics.pendingPayments}</p>
+          <div className={styles.statValue}>
+            ₹{metrics.monthlyRevenue.toFixed(2)}
           </div>
         </div>
 
-        <div className={styles.metricCard}>
-          <div className={styles.metricIcon} style={{ background: '#f3e8ff', color: '#a855f7' }}>
-            <Activity size={24} />
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <div className={styles.iconWrapperWarning}>
+              <Clock size={24} />
+            </div>
+            <h2 className={styles.cardTitle}>Pending Bills</h2>
           </div>
-          <div className={styles.metricInfo}>
-            <h3>Total Transactions</h3>
-            <p className={styles.metricValue}>{metrics.totalTransactions}</p>
+          <div className={styles.statValue}>{metrics.pendingPayments}</div>
+        </div>
+
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <div className={styles.iconWrapper} style={{ backgroundColor: '#f3e8ff', color: '#a855f7' }}>
+              <Activity size={24} />
+            </div>
+            <h2 className={styles.cardTitle}>Total Transactions</h2>
           </div>
+          <div className={styles.statValue}>{metrics.totalTransactions}</div>
         </div>
       </div>
 
