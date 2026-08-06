@@ -14,7 +14,9 @@ import {
   Microscope,
   BarChart,
   Settings,
-  LogOut
+  LogOut,
+  Bed,
+  Coffee
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import styles from './layout.module.css';
@@ -24,10 +26,12 @@ const navItems = [
   { name: 'Schedule', href: '/doctor/schedule', icon: Calendar },
   { name: 'Consultations', href: '/doctor/consultations', icon: MessageSquare },
   { name: 'Emergencies', href: '/doctor/emergencies', icon: AlertCircle },
+  { name: 'Admissions', href: '/doctor/admissions', icon: Bed },
   { name: 'Patients', href: '/doctor/patients', icon: Users },
   { name: 'Prescriptions', href: '/doctor/prescriptions', icon: FileSignature },
   { name: 'Lab Reports', href: '/doctor/lab', icon: Microscope },
   { name: 'Reports', href: '/doctor/reports', icon: BarChart },
+  { name: 'Canteen', href: '/doctor/canteen', icon: Coffee },
   { name: 'Settings', href: '/doctor/settings', icon: Settings },
 ];
 

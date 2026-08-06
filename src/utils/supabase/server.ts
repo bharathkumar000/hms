@@ -49,7 +49,7 @@ export async function createClient() {
       return {
         data: {
           user: {
-            id: 'demo-user-id',
+            id: '11111111-1111-1111-1111-111111111111',
             email: `demo@${demoAuthCookie.value}.com`,
             role: demoAuthCookie.value,
           }

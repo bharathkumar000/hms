@@ -15,6 +15,7 @@ export default function DoctorPatients() {
   const [medicalHistory, setMedicalHistory] = useState<any[]>([]);
   const [prescriptions, setPrescriptions] = useState<any[]>([]);
   const [labOrders, setLabOrders] = useState<any[]>([]);
+  const [admissions, setAdmissions] = useState<any[]>([]);
 
   const supabase = createClient();
 
@@ -55,15 +56,17 @@ export default function DoctorPatients() {
   const loadPatientDetails = async (patient: any) => {
     setActivePatient(patient);
     
-    const [histReq, presReq, labReq] = await Promise.all([
+    const [histReq, presReq, labReq, admReq] = await Promise.all([
       supabase.from('medical_records').select('*').eq('patient_id', patient.id).order('record_date', { ascending: false }),
       supabase.from('prescriptions').select('*').eq('patient_id', patient.id).order('created_at', { ascending: false }),
-      supabase.from('lab_orders').select('*').eq('patient_id', patient.id).order('created_at', { ascending: false })
+      supabase.from('lab_orders').select('*').eq('patient_id', patient.id).order('created_at', { ascending: false }),
+      supabase.from('admissions').select('*, beds(bed_number, rooms(room_number, wards(name)))').eq('patient_id', patient.id).order('admission_date', { ascending: false })
     ]);
 
     if (histReq.data) setMedicalHistory(histReq.data);
     if (presReq.data) setPrescriptions(presReq.data);
     if (labReq.data) setLabOrders(labReq.data);
+    if (admReq.data) setAdmissions(admReq.data);
   };
 
   if (activePatient) {
@@ -126,7 +129,7 @@ export default function DoctorPatients() {
             </div>
 
             {/* Lab Orders */}
-            <div className={styles.card}>
+            <div className={styles.card} style={{ marginBottom: '1.5rem' }}>
               <h2 className={styles.sectionTitle}>Lab Reports</h2>
               <div className={styles.list}>
                 {labOrders.length > 0 ? (
@@ -140,6 +143,30 @@ export default function DoctorPatients() {
                   ))
                 ) : (
                   <p className={styles.details}>No lab reports found.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Admission Details */}
+            <div className={styles.card}>
+              <h2 className={styles.sectionTitle}>Admissions History</h2>
+              <div className={styles.list}>
+                {admissions.length > 0 ? (
+                  admissions.map(adm => (
+                    <div key={adm.id} className={styles.listItem} style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                      <div className={styles.patientName}>
+                        {adm.beds?.rooms?.wards?.name} - Room {adm.beds?.rooms?.room_number}, Bed {adm.beds?.bed_number}
+                      </div>
+                      <div className={styles.details}>
+                        Status: <strong>{adm.status}</strong> | Date: {new Date(adm.admission_date).toLocaleDateString()}
+                      </div>
+                      <div className={styles.details}>
+                        Nurse: {adm.head_nurse_name || 'Not Assigned'}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className={styles.details}>No admission records found.</p>
                 )}
               </div>
             </div>

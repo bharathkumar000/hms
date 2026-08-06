@@ -20,6 +20,7 @@ export default function DoctorPrescriptions() {
   const [duration, setDuration] = useState('');
   const [submitting, setSubmitting] = useState(false);
   
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [recentPrescriptions, setRecentPrescriptions] = useState<any[]>([]);
 
   const supabase = createClient();
@@ -55,28 +56,62 @@ export default function DoctorPrescriptions() {
     const { data: userData } = await supabase.auth.getUser();
     const doctorId = userData?.user?.id;
 
-    const { error } = await supabase
-      .from('prescriptions')
-      .insert({
-        patient_id: selectedPatientId,
-        doctor_id: doctorId,
-        medicine_name: medicineName,
-        dosage: dosage,
-        frequency: frequency,
-        duration: duration,
-        status: 'Active'
-      });
+    let query;
+    if (editingId) {
+      query = supabase
+        .from('prescriptions')
+        .update({
+          patient_id: selectedPatientId,
+          medicine_name: medicineName,
+          dosage: dosage,
+          frequency: frequency,
+          duration: duration
+        })
+        .eq('id', editingId);
+    } else {
+      query = supabase
+        .from('prescriptions')
+        .insert({
+          patient_id: selectedPatientId,
+          doctor_id: doctorId,
+          medicine_name: medicineName,
+          dosage: dosage,
+          frequency: frequency,
+          duration: duration,
+          status: 'Active'
+        });
+    }
+
+    const { error } = await query;
 
     if (error) {
-      showAlert('Failed to save prescription.');
+      showAlert(`Failed to save prescription: ${error.message}`);
     } else {
       setMedicineName('');
       setDosage('');
       setFrequency('');
       setDuration('');
+      setEditingId(null);
       fetchInitialData();
     }
     setSubmitting(false);
+  };
+
+  const handleEdit = (px: any) => {
+    setEditingId(px.id);
+    setSelectedPatientId(px.patient_id);
+    setMedicineName(px.medicine_name);
+    setDosage(px.dosage);
+    setFrequency(px.frequency);
+    setDuration(px.duration);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (await showConfirm('Are you sure you want to delete this prescription?')) {
+      const { error } = await supabase.from('prescriptions').delete().eq('id', id);
+      if (error) showAlert(`Error deleting: ${error.message}`);
+      else fetchInitialData();
+    }
   };
 
   return (
@@ -160,12 +195,27 @@ export default function DoctorPrescriptions() {
             </div>
 
             <div className={styles.formActions}>
+              {editingId && (
+                <button 
+                  type="button"
+                  className={styles.btnOutline}
+                  onClick={() => {
+                    setEditingId(null);
+                    setMedicineName('');
+                    setDosage('');
+                    setFrequency('');
+                    setDuration('');
+                  }}
+                >
+                  Cancel Edit
+                </button>
+              )}
               <button 
                 type="submit" 
                 className={styles.btnPrimary}
                 disabled={submitting}
               >
-                {submitting ? 'Saving...' : 'Issue Prescription'}
+                {submitting ? 'Saving...' : editingId ? 'Update Prescription' : 'Issue Prescription'}
               </button>
             </div>
           </form>
@@ -180,9 +230,9 @@ export default function DoctorPrescriptions() {
             <div className={styles.list}>
               {recentPrescriptions.map(px => (
                 <div key={px.id} className={styles.listItem} style={{ alignItems: 'flex-start' }}>
-                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <div style={{ display: 'flex', gap: '0.75rem', flex: 1 }}>
                     <Pill size={18} color="var(--color-primary)" style={{ marginTop: '4px' }} />
-                    <div>
+                    <div style={{ flex: 1 }}>
                       <div className={styles.patientName}>{px.medicine_name}</div>
                       <div className={styles.details}>
                         Patient: {px.profiles?.first_name} {px.profiles?.last_name}
@@ -191,6 +241,10 @@ export default function DoctorPrescriptions() {
                         {px.dosage} | {px.frequency} | {px.duration}
                       </div>
                     </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                    <button onClick={() => handleEdit(px)} className={styles.btnOutline} style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>Edit</button>
+                    <button onClick={() => handleDelete(px.id)} className={styles.btnOutline} style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', color: '#dc2626', borderColor: '#dc2626' }}>Delete</button>
                   </div>
                 </div>
               ))}

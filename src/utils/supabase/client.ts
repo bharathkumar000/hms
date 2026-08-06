@@ -29,7 +29,7 @@ export function createClient() {
       const match = document.cookie.match(new RegExp('(^| )demo_auth=([^;]+)'));
       if (match) {
         return {
-          id: 'demo-user-id',
+          id: '11111111-1111-1111-1111-111111111111',
           email: `demo@${match[2]}.com`,
           role: match[2],
         };

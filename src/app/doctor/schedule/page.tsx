@@ -110,9 +110,9 @@ export default function DoctorSchedule() {
                       </button>
                       <button 
                         className={`${styles.btnOutline} ${styles.btnDanger}`}
-                        onClick={() => updateStatus(apt.id, 'Cancelled')}
+                        onClick={() => updateStatus(apt.id, 'No Show')}
                       >
-                        Cancel
+                        No Show
                       </button>
                     </div>
                   )}
