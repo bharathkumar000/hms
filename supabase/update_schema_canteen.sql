@@ -46,21 +46,34 @@ ALTER TABLE public.canteen_settings ENABLE ROW LEVEL SECURITY;
 
 -- Note: In this project's demo context, RLS policies are typically bypassed for the demo,
 -- but we create basic open policies for the authenticated users as a foundation.
+DROP POLICY IF EXISTS "Enable read access for all authenticated users" ON public.canteen_payments;
 CREATE POLICY "Enable read access for all authenticated users" ON public.canteen_payments FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "Enable insert for all authenticated users" ON public.canteen_payments;
 CREATE POLICY "Enable insert for all authenticated users" ON public.canteen_payments FOR INSERT TO authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "Enable update for all authenticated users" ON public.canteen_payments;
 CREATE POLICY "Enable update for all authenticated users" ON public.canteen_payments FOR UPDATE TO authenticated USING (true);
 
+DROP POLICY IF EXISTS "Enable read access for all authenticated users" ON public.canteen_settings;
 CREATE POLICY "Enable read access for all authenticated users" ON public.canteen_settings FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "Enable insert for all authenticated users" ON public.canteen_settings;
 CREATE POLICY "Enable insert for all authenticated users" ON public.canteen_settings FOR INSERT TO authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "Enable update for all authenticated users" ON public.canteen_settings;
 CREATE POLICY "Enable update for all authenticated users" ON public.canteen_settings FOR UPDATE TO authenticated USING (true);
 
 -- 5. Fix RLS for menu_items and canteen_orders for Canteen Portal Operations (Allowing Demo Mode / Anon)
+DROP POLICY IF EXISTS "Enable insert for all users" ON public.menu_items;
 CREATE POLICY "Enable insert for all users" ON public.menu_items FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Enable update for all users" ON public.menu_items;
 CREATE POLICY "Enable update for all users" ON public.menu_items FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "Enable delete for all users" ON public.menu_items;
 CREATE POLICY "Enable delete for all users" ON public.menu_items FOR DELETE USING (true);
 
+DROP POLICY IF EXISTS "Enable insert for all users" ON public.food_categories;
 CREATE POLICY "Enable insert for all users" ON public.food_categories FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Enable update for all users" ON public.food_categories;
 CREATE POLICY "Enable update for all users" ON public.food_categories FOR UPDATE USING (true);
 
+DROP POLICY IF EXISTS "Enable insert for all users" ON public.canteen_orders;
 CREATE POLICY "Enable insert for all users" ON public.canteen_orders FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Enable update for all users" ON public.canteen_orders;
 CREATE POLICY "Enable update for all users" ON public.canteen_orders FOR UPDATE USING (true);
