@@ -100,6 +100,7 @@ export default function AdminUsers() {
     } else {
       // Add new
       if (activeTab === 'doctors') insertData.available = true;
+      if (activeTab === 'profiles') insertData.id = crypto.randomUUID();
       const { error } = await supabase.from(activeTab).insert([insertData]);
       if (error) showAlert('Error adding user: ' + error.message);
       else {
