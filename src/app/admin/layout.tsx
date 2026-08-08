@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   ShieldCheck, 
@@ -28,14 +29,47 @@ export default function AdminLayout({
   const router = useRouter();
   const supabase = createClient();
 
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      if (pathname === '/admin/login') {
+        setIsAuthChecking(false);
+        return;
+      }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push('/admin/login');
+      } else {
+        setIsAuthChecking(false);
+      }
+    };
+    
+    checkAuth();
+    
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' && pathname !== '/admin/login') {
+        router.push('/admin/login');
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [pathname, router, supabase]);
+
   // Don't show sidebar on login page
   if (pathname === '/admin/login') {
     return <>{children}</>;
   }
 
+  if (isAuthChecking) {
+    return <div style={{ display: 'flex', height: '100vh', justifyContent: 'center', alignItems: 'center' }}>Loading Admin Portal...</div>;
+  }
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push('/');
+    // Router push is handled by onAuthStateChange
   };
 
   const navGroups = [

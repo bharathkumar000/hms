@@ -17,6 +17,7 @@ export default function AdminUsers() {
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({ 
     first_name: '', 
@@ -79,10 +80,11 @@ export default function AdminUsers() {
     setShowModal(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSaveUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
     
-    const insertData: any = {
+    let insertData: any = {
       first_name: formData.first_name,
       last_name: formData.last_name,
       email: formData.email,
@@ -119,6 +121,7 @@ export default function AdminUsers() {
         fetchUsers();
       }
     }
+    setSubmitting(false);
   };
 
   const handleDelete = async (id: string) => {
@@ -164,7 +167,7 @@ export default function AdminUsers() {
       </header>
 
       <div className={styles.card}>
-        <div className={styles.tabs} style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.5rem' }}>
+        <div className={styles.tabs} style={{ display: 'flex', flexWrap: 'wrap', marginBottom: '1.5rem', gap: '2rem' }}>
           {['doctors', 'nurses', 'reception_staff', 'lab_staff', 'pharmacists', 'admins', 'profiles'].map(tab => (
             <button 
               key={tab}
@@ -287,7 +290,7 @@ export default function AdminUsers() {
             <h2 style={{ marginBottom: '1.5rem', textTransform: 'capitalize' }}>
               {editMode ? 'Edit' : 'Add New'} {getTabLabel(activeTab).slice(0, -1)}
             </h2>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSaveUser}>
               <div style={{ display: 'flex', gap: '1rem' }}>
                 <div className={styles.formGroup} style={{ flex: 1 }}>
                   <label>First Name</label>
@@ -345,7 +348,9 @@ export default function AdminUsers() {
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
                 <button type="button" className={styles.btnOutline} onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className={styles.btnPrimary}>{editMode ? 'Save Changes' : 'Save User'}</button>
+                <button type="submit" className={styles.btnPrimary} disabled={submitting}>
+                  {submitting ? 'Saving...' : 'Save User'}
+                </button>
               </div>
             </form>
           </div>

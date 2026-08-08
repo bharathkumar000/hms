@@ -4,7 +4,7 @@ import { useModal } from '@/components/ModalProvider';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { ShieldAlert, Database, History, Search, Download } from 'lucide-react';
-import styles from '../users/users.module.css';
+import styles from '../../users/users.module.css';
 
 export default function AdminLogs() {
   const { showAlert, showConfirm } = useModal();

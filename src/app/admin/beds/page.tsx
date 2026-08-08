@@ -18,6 +18,7 @@ export default function AdminBeds() {
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
     bed_number: '',
@@ -89,6 +90,7 @@ export default function AdminBeds() {
       showAlert('Please select a room.');
       return;
     }
+    setSubmitting(true);
     
     const saveData = {
       bed_number: formData.bed_number,
@@ -108,6 +110,7 @@ export default function AdminBeds() {
       if (error) showAlert('Error adding bed: ' + error.message);
       else { setShowModal(false); fetchData(); }
     }
+    setSubmitting(false);
   };
 
   const handleDelete = async (id: string, isOccupied: boolean) => {
@@ -258,7 +261,9 @@ export default function AdminBeds() {
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
                 <button type="button" className={styles.btnOutline} onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className={styles.btnPrimary}>Save</button>
+                <button type="submit" className={styles.btnPrimary} disabled={submitting}>
+                  {submitting ? 'Saving...' : 'Save Bed'}
+                </button>
               </div>
             </form>
           </div>

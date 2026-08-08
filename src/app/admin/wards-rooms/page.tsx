@@ -103,6 +103,7 @@ export default function AdminWardsRooms() {
 
   const handleSaveWard = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
     const saveData = {
       name: wardForm.name,
       ward_code: wardForm.ward_code || null,
@@ -122,6 +123,7 @@ export default function AdminWardsRooms() {
       if (error) showAlert('Error adding ward: ' + error.message);
       else { setShowWardModal(false); fetchData(); }
     }
+    setSubmitting(false);
   };
 
   const handleDeleteWard = async (id: string) => {
@@ -159,6 +161,7 @@ export default function AdminWardsRooms() {
       showAlert('Please select a ward.');
       return;
     }
+    setSubmitting(true);
     const saveData = {
       room_number: roomForm.room_number,
       ward_id: roomForm.ward_id,
@@ -176,6 +179,7 @@ export default function AdminWardsRooms() {
       if (error) showAlert('Error adding room: ' + error.message);
       else { setShowRoomModal(false); fetchData(); }
     }
+    setSubmitting(false);
   };
 
   const handleDeleteRoom = async (id: string) => {
@@ -195,16 +199,14 @@ export default function AdminWardsRooms() {
         </div>
         <div className={styles.actions}>
           <button 
-            className={`${styles.btnOutline} ${activeTab === 'wards' ? styles.btnPrimary : ''}`} 
+            className={activeTab === 'wards' ? styles.btnPrimary : styles.btnOutline} 
             onClick={() => setActiveTab('wards')}
-            style={activeTab === 'wards' ? { color: 'white', borderColor: 'transparent' } : {}}
           >
             <Building size={20} /> Wards
           </button>
           <button 
-            className={`${styles.btnOutline} ${activeTab === 'rooms' ? styles.btnPrimary : ''}`} 
+            className={activeTab === 'rooms' ? styles.btnPrimary : styles.btnOutline} 
             onClick={() => setActiveTab('rooms')}
-            style={activeTab === 'rooms' ? { color: 'white', borderColor: 'transparent' } : {}}
           >
             <Building size={20} /> Rooms
           </button>
@@ -388,9 +390,11 @@ export default function AdminWardsRooms() {
                 </select>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
+              <div className={styles.modalActions}>
                 <button type="button" className={styles.btnOutline} onClick={() => setShowWardModal(false)}>Cancel</button>
-                <button type="submit" className={styles.btnPrimary}>Save</button>
+                <button type="submit" className={styles.btnPrimary} disabled={submitting}>
+                  {submitting ? 'Saving...' : 'Save'}
+                </button>
               </div>
             </form>
           </div>
@@ -444,9 +448,11 @@ export default function AdminWardsRooms() {
                 </select>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
+              <div className={styles.modalActions}>
                 <button type="button" className={styles.btnOutline} onClick={() => setShowRoomModal(false)}>Cancel</button>
-                <button type="submit" className={styles.btnPrimary}>Save</button>
+                <button type="submit" className={styles.btnPrimary} disabled={submitting}>
+                  {submitting ? 'Saving...' : 'Save'}
+                </button>
               </div>
             </form>
           </div>
