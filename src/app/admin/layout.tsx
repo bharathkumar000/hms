@@ -48,8 +48,8 @@ export default function AdminLayout({
     checkAuth();
     
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT' && pathname !== '/admin/login') {
-        router.push('/admin/login');
+      if (event === 'SIGNED_OUT') {
+        router.push('/');
       }
     });
 
@@ -69,7 +69,7 @@ export default function AdminLayout({
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    // Router push is handled by onAuthStateChange
+    router.push('/');
   };
 
   const navGroups = [
