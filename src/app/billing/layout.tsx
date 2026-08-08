@@ -35,7 +35,7 @@ export default function BillingLayout({
     }
     const cookieMatch = document.cookie.match(/(?:^|; )demo_auth=([^;]*)/);
     if (!cookieMatch || cookieMatch[1] !== 'billing') {
-      router.push('/billing/login');
+      window.location.href = '/billing/login';
     } else {
       setIsAuthChecking(false);
     }

@@ -45,7 +45,7 @@ export default function ReceptionLayout({ children }: { children: React.ReactNod
     }
     const cookieMatch = document.cookie.match(/(?:^|; )demo_auth=([^;]*)/);
     if (!cookieMatch || cookieMatch[1] !== 'reception') {
-      router.push('/reception/login');
+      window.location.href = '/reception/login';
     } else {
       setIsAuthChecking(false);
     }

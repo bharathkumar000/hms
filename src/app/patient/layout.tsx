@@ -50,7 +50,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
     }
     const cookieMatch = document.cookie.match(/(?:^|; )demo_auth=([^;]*)/);
     if (!cookieMatch || cookieMatch[1] !== 'patient') {
-      router.push('/patient/login');
+      window.location.href = '/patient/login';
     } else {
       setIsAuthChecking(false);
     }

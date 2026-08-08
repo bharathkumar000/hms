@@ -50,7 +50,7 @@ export default function DoctorLayout({ children }: { children: React.ReactNode }
     }
     const cookieMatch = document.cookie.match(/(?:^|; )demo_auth=([^;]*)/);
     if (!cookieMatch || cookieMatch[1] !== 'doctor') {
-      router.push('/doctor/login');
+      window.location.href = '/doctor/login';
     } else {
       setIsAuthChecking(false);
     }

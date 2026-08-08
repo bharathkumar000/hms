@@ -39,7 +39,7 @@ export default function AdminLayout({
       }
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        router.push('/admin/login');
+        window.location.href = '/admin/login';
       } else {
         setIsAuthChecking(false);
       }

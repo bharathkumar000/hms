@@ -39,7 +39,7 @@ export default function PharmacyLayout({
     }
     const cookieMatch = document.cookie.match(/(?:^|; )demo_auth=([^;]*)/);
     if (!cookieMatch || cookieMatch[1] !== 'pharmacy') {
-      router.push('/pharmacy/login');
+      window.location.href = '/pharmacy/login';
     } else {
       setIsAuthChecking(false);
     }

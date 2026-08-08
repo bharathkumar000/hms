@@ -46,7 +46,7 @@ export default function CanteenLayout({ children }: { children: React.ReactNode 
     }
     const cookieMatch = document.cookie.match(/(?:^|; )demo_auth=([^;]*)/);
     if (!cookieMatch || cookieMatch[1] !== 'canteen') {
-      router.push('/canteen/login');
+      window.location.href = '/canteen/login';
     } else {
       setIsAuthChecking(false);
     }

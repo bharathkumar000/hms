@@ -47,7 +47,7 @@ export default function LaboratoryLayout({ children }: { children: React.ReactNo
     }
     const cookieMatch = document.cookie.match(/(?:^|; )demo_auth=([^;]*)/);
     if (!cookieMatch || cookieMatch[1] !== 'laboratory') {
-      router.push('/laboratory/login');
+      window.location.href = '/laboratory/login';
     } else {
       setIsAuthChecking(false);
     }
