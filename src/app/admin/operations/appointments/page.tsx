@@ -4,7 +4,7 @@ import { useModal } from '@/components/ModalProvider';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { Search } from 'lucide-react';
-import styles from '../users/users.module.css';
+import styles from '../../users/users.module.css';
 
 export default function AdminAppointments() {
   const { showAlert, showConfirm } = useModal();

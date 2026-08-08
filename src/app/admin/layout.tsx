@@ -38,22 +38,47 @@ export default function AdminLayout({
     router.push('/');
   };
 
-  const navItems = [
-    { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
-    { name: 'User Management', path: '/admin/users', icon: Users },
-    { name: 'Departments', path: '/admin/departments', icon: Building2 },
-    { name: 'Appointments', path: '/admin/appointments', icon: Calendar },
-  ];
-
-  const monitoringItems = [
-    { name: 'Analytics', path: '/admin/analytics', icon: BarChart3 },
-    { name: 'Inventory', path: '/admin/inventory', icon: Package },
-    { name: 'Billing Overview', path: '/admin/billing', icon: Receipt },
-  ];
-
-  const systemItems = [
-    { name: 'Settings', path: '/admin/settings', icon: Settings },
-    { name: 'System Logs', path: '/admin/logs', icon: FileText },
+  const navGroups = [
+    {
+      title: 'DASHBOARD',
+      items: [
+        { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
+      ]
+    },
+    {
+      title: 'HOSPITAL MANAGEMENT',
+      items: [
+        { name: 'Departments', path: '/admin/departments', icon: Building2 },
+        { name: 'Wards & Rooms', path: '/admin/wards-rooms', icon: Building2 },
+        { name: 'Beds', path: '/admin/beds', icon: Building2 },
+        { name: 'Staff & Users', path: '/admin/users', icon: Users },
+      ]
+    },
+    {
+      title: 'OPERATIONS',
+      items: [
+        { name: 'Appointments', path: '/admin/operations/appointments', icon: Calendar },
+        { name: 'Admissions', path: '/admin/operations/admissions', icon: Calendar },
+        { name: 'Queue Monitoring', path: '/admin/operations/queue', icon: Calendar },
+      ]
+    },
+    {
+      title: 'MONITORING',
+      items: [
+        { name: 'Hospital Analytics', path: '/admin/analytics', icon: BarChart3 },
+        { name: 'Inventory', path: '/admin/inventory', icon: Package },
+        { name: 'Billing Overview', path: '/admin/billing', icon: Receipt },
+      ]
+    },
+    {
+      title: 'SYSTEM',
+      items: [
+        { name: 'Notifications', path: '/admin/system/notifications', icon: ShieldCheck },
+        { name: 'Audit Logs', path: '/admin/system/audit', icon: FileText },
+        { name: 'System Settings', path: '/admin/system/settings', icon: Settings },
+        { name: 'Profile', path: '/admin/system/profile', icon: Users },
+      ]
+    }
   ];
 
   return (
@@ -65,50 +90,27 @@ export default function AdminLayout({
         </div>
 
         <nav className={styles.nav}>
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                href={item.path}
-                className={`${styles.navLink} ${isActive ? styles.activeNavLink : ''}`}
-              >
-                <Icon size={20} />
-                <span>{item.name}</span>
-              </Link>
-            );
-          })}
-
-          {monitoringItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                href={item.path}
-                className={`${styles.navLink} ${isActive ? styles.activeNavLink : ''}`}
-              >
-                <Icon size={20} />
-                <span>{item.name}</span>
-              </Link>
-            );
-          })}
-
-          {systemItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                href={item.path}
-                className={`${styles.navLink} ${isActive ? styles.activeNavLink : ''}`}
-              >
-                <Icon size={20} />
-                <span>{item.name}</span>
-              </Link>
-            );
-          })}
+          {navGroups.map((group) => (
+            <div key={group.title} style={{ marginBottom: '1.5rem' }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: '0.5rem', paddingLeft: '1rem', letterSpacing: '0.05em' }}>
+                {group.title}
+              </div>
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.path || pathname.startsWith(item.path + '/');
+                return (
+                  <Link
+                    key={item.path}
+                    href={item.path}
+                    className={`${styles.navLink} ${isActive ? styles.activeNavLink : ''}`}
+                  >
+                    <Icon size={20} />
+                    <span>{item.name}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
         <div className={styles.footer}>
