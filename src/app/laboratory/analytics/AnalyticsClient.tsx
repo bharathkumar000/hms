@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { BarChart2, Calendar, FileText, PieChart, Activity, User, Download, Printer } from 'lucide-react';
+import { BarChart2, Calendar, FileText, PieChart, Activity, User, Download, Printer, CheckCircle } from 'lucide-react';
 import styles from './analytics.module.css';
 
 export default function AnalyticsClient({ orders, maintenanceLogs }: { orders: any[], maintenanceLogs: any[] }) {
@@ -50,6 +50,102 @@ export default function AnalyticsClient({ orders, maintenanceLogs }: { orders: a
     categoryStats[o.test_category] = (categoryStats[o.test_category] || 0) + 1;
   });
 
+  const exportToCSV = () => {
+    let csvContent = "data:text/csv;charset=utf-8,";
+    
+    // Overall Metrics
+    csvContent += "Overall Metrics\n";
+    csvContent += `Timeframe,${timeframe}\n`;
+    csvContent += `Total Tests,${totalTests}\n`;
+    csvContent += `Completed,${completedTests}\n`;
+    csvContent += `Pending/Processing,${pendingTests + processingTests}\n\n`;
+
+    // Technician Performance
+    csvContent += "Technician Performance\n";
+    csvContent += "Technician Name,Assigned Tests,Completed,Completion Rate\n";
+    Object.values(techStats).forEach(tech => {
+      const rate = tech.assigned > 0 ? Math.round((tech.completed / tech.assigned) * 100) : 0;
+      csvContent += `${tech.name},${tech.assigned},${tech.completed},${rate}%\n`;
+    });
+    
+    // Test Volume
+    csvContent += "\nTest Volume by Category\n";
+    csvContent += "Category,Count\n";
+    Object.entries(categoryStats).forEach(([category, count]) => {
+      csvContent += `${category},${count}\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `laboratory_report_${timeframe}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const printReport = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    let html = `
+      <html>
+        <head>
+          <title>Laboratory Report - ${timeframe}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h1 { color: #333; }
+            h2 { color: #555; margin-top: 30px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+            th, td { border: 1px solid #ddd; padding: 12px; text-align: left; font-size: 14px; }
+            th { background-color: #f8fafc; color: #334155; font-weight: 600; }
+            tr:nth-child(even) { background-color: #f1f5f9; }
+          </style>
+        </head>
+        <body>
+          <h1>Laboratory Analytics Report (${timeframe.toUpperCase()})</h1>
+          
+          <h2>Overall Metrics</h2>
+          <table>
+            <tr><th>Metric</th><th>Value</th></tr>
+            <tr><td>Total Tests</td><td>${totalTests}</td></tr>
+            <tr><td>Completed</td><td>${completedTests}</td></tr>
+            <tr><td>Pending/Processing</td><td>${pendingTests + processingTests}</td></tr>
+          </table>
+
+          <h2>Technician Performance</h2>
+          <table>
+            <tr><th>Technician Name</th><th>Assigned Tests</th><th>Completed</th><th>Completion Rate</th></tr>
+            ${Object.values(techStats).map(tech => {
+              const rate = tech.assigned > 0 ? Math.round((tech.completed / tech.assigned) * 100) : 0;
+              return '<tr><td>' + tech.name + '</td><td>' + tech.assigned + '</td><td>' + tech.completed + '</td><td>' + rate + '%</td></tr>';
+            }).join('')}
+          </table>
+
+          <h2>Test Volume by Category</h2>
+          <table>
+            <tr><th>Category</th><th>Count</th></tr>
+            ${Object.entries(categoryStats).map(([category, count]) => {
+              return '<tr><td>' + category + '</td><td>' + count + '</td></tr>';
+            }).join('')}
+          </table>
+          
+          <script>
+            window.onload = function() { 
+              setTimeout(function() {
+                window.print(); 
+                window.close(); 
+              }, 250);
+            }
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
   return (
     <div className={styles.container}>
       <header className={styles.header}>
@@ -58,11 +154,11 @@ export default function AnalyticsClient({ orders, maintenanceLogs }: { orders: a
           <p className={styles.subtitle}>Analyze lab performance, test volumes, and equipment usage.</p>
         </div>
         <div className={styles.actions}>
-          <button className={styles.btnSecondary} onClick={() => window.print()}>
-            <Printer size={18} /> Print Report
+          <button className={styles.btnSecondary} onClick={exportToCSV}>
+            <Download size={18} /> Export (CSV)
           </button>
-          <button className={styles.btnPrimary} onClick={() => alert('Exporting to PDF...')}>
-            <Download size={18} /> Export PDF
+          <button className={styles.btnPrimary} onClick={printReport}>
+            <Printer size={18} /> Print Report
           </button>
         </div>
       </header>

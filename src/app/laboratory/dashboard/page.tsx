@@ -131,38 +131,7 @@ export default async function LaboratoryDashboard() {
           </div>
         </div>
         
-        {/* Quick Actions */}
-        <div className={styles.card}>
-          <h2 className={styles.cardTitle} style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>
-            Quick Actions
-          </h2>
-          <div className={styles.list}>
-            <Link href="/laboratory/requests" className={styles.listItem} style={{ cursor: 'pointer', paddingBottom: '0.5rem', borderBottom: 'none' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-primary)', fontWeight: 500 }}>
-                <ClipboardList size={18} /> View Pending Requests
-              </div>
-              <ArrowRight size={16} color="var(--color-text-secondary)" />
-            </Link>
-            <Link href="/laboratory/samples" className={styles.listItem} style={{ cursor: 'pointer', paddingBottom: '0.5rem', borderBottom: 'none' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-primary)', fontWeight: 500 }}>
-                <TestTube size={18} /> Manage Samples
-              </div>
-              <ArrowRight size={16} color="var(--color-text-secondary)" />
-            </Link>
-            <Link href="/laboratory/processing" className={styles.listItem} style={{ cursor: 'pointer', paddingBottom: '0.5rem', borderBottom: 'none' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-primary)', fontWeight: 500 }}>
-                <Activity size={18} /> Process Tests
-              </div>
-              <ArrowRight size={16} color="var(--color-text-secondary)" />
-            </Link>
-            <Link href="/laboratory/reports" className={styles.listItem} style={{ cursor: 'pointer', paddingBottom: '0.5rem', borderBottom: 'none' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-primary)', fontWeight: 500 }}>
-                <FileText size={18} /> Review Reports
-              </div>
-              <ArrowRight size={16} color="var(--color-text-secondary)" />
-            </Link>
-          </div>
-        </div>
+
       </div>
     </div>
   );
