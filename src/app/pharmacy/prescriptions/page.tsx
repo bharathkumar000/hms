@@ -14,28 +14,11 @@ export default function PharmacyPrescriptions() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('Pending'); // Pending, Completed, All
   
-  // Dispense Modal State
-  const [showModal, setShowModal] = useState(false);
-  const [selectedPrescription, setSelectedPrescription] = useState<any>(null);
-  const [inventory, setInventory] = useState<any[]>([]);
-  const [selectedBatchId, setSelectedBatchId] = useState('');
-  const [dispenseQty, setDispenseQty] = useState(1);
-  const [pharmacistId, setPharmacistId] = useState('');
-
   const supabase = createClient();
 
   useEffect(() => {
     fetchPrescriptions();
-    fetchPharmacistId();
   }, [filter]);
-
-  const fetchPharmacistId = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data } = await supabase.from('pharmacists').select('id').eq('user_id', user.id).single();
-      if (data) setPharmacistId(data.id);
-    }
-  };
 
   const fetchPrescriptions = async () => {
     setLoading(true);
@@ -55,78 +38,6 @@ export default function PharmacyPrescriptions() {
     setLoading(false);
   };
 
-  const openDispenseModal = async (prescription: any) => {
-    setSelectedPrescription(prescription);
-    
-    // Fetch available batches with stock > 0
-    const { data: batches } = await supabase
-      .from('medicine_batches')
-      .select('*, medicines(name, price_per_unit)')
-      .gt('quantity', 0)
-      .order('expiry_date', { ascending: true }); // FEFO (First Expire First Out)
-      
-    if (batches) {
-      setInventory(batches);
-      if (batches.length > 0) setSelectedBatchId(batches[0].id);
-    }
-    
-    setDispenseQty(1);
-    setShowModal(true);
-  };
-
-  const handleDispense = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedPrescription || !selectedBatchId) return;
-
-    const batch = inventory.find(b => b.id === selectedBatchId);
-    if (!batch || batch.quantity < dispenseQty) {
-      showAlert('Insufficient stock in selected batch!');
-      return;
-    }
-
-    // 1. Deduct stock from batch
-    await supabase.from('medicine_batches').update({ quantity: batch.quantity - dispenseQty }).eq('id', batch.id);
-
-    // 2. Record stock transaction
-    await supabase.from('stock_transactions').insert({
-      medicine_id: batch.medicine_id,
-      batch_id: batch.id,
-      transaction_type: 'OUT',
-      quantity: dispenseQty,
-      reference_type: 'Prescription',
-      reference_id: selectedPrescription.id,
-      notes: `Dispensed to patient ${selectedPrescription.profiles?.first_name}`
-    });
-
-    // 3. Update prescription
-    const totalDispensed = (selectedPrescription.dispensed_quantity || 0) + dispenseQty;
-    // We assume if they click Complete in the UI, they want to close it out.
-    // We'll leave it 'Completed' here, though in reality it might be 'Partially Dispensed'
-    
-    await supabase.from('prescriptions').update({
-      dispensed_quantity: totalDispensed,
-      dispense_status: 'Completed',
-      pharmacist_id: pharmacistId || null,
-      dispense_date: new Date().toISOString()
-    }).eq('id', selectedPrescription.id);
-
-    // 4. Automatic Billing: Add medicine charge
-    if (selectedPrescription.patient_id) {
-      await addChargeToPatient(
-        selectedPrescription.patient_id, 
-        selectedPrescription.appointment_id || null, 
-        `Pharmacy: ${batch.medicines?.name} (Batch: ${batch.batch_number})`, 
-        'Pharmacy', 
-        Number(batch.medicines?.price_per_unit || 0),
-        dispenseQty
-      );
-    }
-
-    setShowModal(false);
-    fetchPrescriptions();
-    showAlert('Medicine dispensed successfully!');
-  };
-
   const getStatusClass = (status: string) => {
     if (status === 'Completed') return styles.statusCompleted;
     if (status === 'Partially Dispensed') return styles.statusPartial;
@@ -138,7 +49,7 @@ export default function PharmacyPrescriptions() {
       <header className={styles.header}>
         <div>
           <h1 className={styles.title}>Prescription Management</h1>
-          <p className={styles.details}>Review e-prescriptions and dispense medicines securely.</p>
+          <p className={styles.details}>Review e-prescriptions sent by doctors across the hospital.</p>
         </div>
       </header>
 
@@ -193,9 +104,9 @@ export default function PharmacyPrescriptions() {
                   
                   {(p.dispense_status === 'Pending' || p.dispense_status === 'Partially Dispensed' || !p.dispense_status) && (
                     <div className={styles.actions}>
-                      <button className={styles.btnPrimary} onClick={() => openDispenseModal(p)}>
-                        Dispense Medicine
-                      </button>
+                      <a href="/pharmacy/dispensing" className={styles.btnPrimary} style={{ textDecoration: 'none' }}>
+                        Go to Dispensing
+                      </a>
                     </div>
                   )}
                 </div>
@@ -206,52 +117,6 @@ export default function PharmacyPrescriptions() {
           <p>No prescriptions found for this filter.</p>
         )}
       </div>
-
-      {showModal && selectedPrescription && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <h2 style={{ marginBottom: '1rem' }}>Dispense Medicine</h2>
-            
-            <div style={{ backgroundColor: 'var(--color-light)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
-              <p style={{ fontWeight: 600, color: 'var(--color-primary)', marginBottom: '0.5rem' }}>
-                <AlertCircle size={16} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'text-bottom' }}/> 
-                Doctor's Request
-              </p>
-              <p style={{ fontSize: '1.1rem', fontWeight: 700 }}>{selectedPrescription.medicine_name}</p>
-              <p style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>{selectedPrescription.dosage} | {selectedPrescription.frequency} | {selectedPrescription.duration}</p>
-            </div>
-
-            <form onSubmit={handleDispense}>
-              <div className={styles.formGroup}>
-                <label>Select Medicine & Batch from Inventory to Deduct</label>
-                <select required className={styles.input} value={selectedBatchId} onChange={e => setSelectedBatchId(e.target.value)}>
-                  <option value="" disabled>-- Select Medicine Batch --</option>
-                  {inventory.map(b => (
-                    <option key={b.id} value={b.id}>
-                      {b.medicines?.name} - Batch {b.batch_number} (Stock: {b.quantity}, Exp: {new Date(b.expiry_date).toLocaleDateString()})
-                    </option>
-                  ))}
-                </select>
-                <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>
-                  * Pharmacist must map the doctor's free-text request to actual inventory.
-                </span>
-              </div>
-              
-              <div className={styles.formGroup}>
-                <label>Quantity to Dispense (Units)</label>
-                <input required type="number" min="1" value={dispenseQty} onChange={e => setDispenseQty(parseInt(e.target.value))} />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
-                <button type="button" className={styles.btnOutline} onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className={styles.btnPrimary}>
-                  <CheckCircle size={18} /> Complete & Dispense
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

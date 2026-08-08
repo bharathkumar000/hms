@@ -41,24 +41,17 @@ export default function PharmacyLayout({
 
   const navItems = [
     { name: 'Dashboard', path: '/pharmacy/dashboard', icon: LayoutDashboard },
-    { name: 'Prescriptions', path: '/pharmacy/prescriptions', icon: ClipboardList },
-  ];
-
-  const inventoryItems = [
+    { name: 'Prescription Management', path: '/pharmacy/prescriptions', icon: ClipboardList },
     { name: 'Inventory', path: '/pharmacy/inventory', icon: Package },
-    { name: 'Stock Alerts', path: '/pharmacy/alerts', icon: AlertTriangle },
-    { name: 'Suppliers', path: '/pharmacy/suppliers', icon: Truck },
-    { name: 'Purchase Orders', path: '/pharmacy/orders', icon: ShoppingCart },
-  ];
-
-  const billingItems = [
+    { name: 'Dispensing', path: '/pharmacy/dispensing', icon: Pill },
     { name: 'Billing', path: '/pharmacy/billing', icon: Receipt },
+    { name: 'Purchase & Suppliers', path: '/pharmacy/purchases', icon: Truck },
     { name: 'Reports', path: '/pharmacy/reports', icon: FileText },
   ];
 
   const systemItems = [
     { name: 'Notifications', path: '/pharmacy/notifications', icon: Bell },
-    { name: 'Settings', path: '/pharmacy/settings', icon: Settings },
+    { name: 'Profile', path: '/pharmacy/profile', icon: Settings },
   ];
 
   return (
@@ -71,36 +64,6 @@ export default function PharmacyLayout({
 
         <nav className={styles.nav}>
           {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                href={item.path}
-                className={`${styles.navLink} ${isActive ? styles.activeNavLink : ''}`}
-              >
-                <Icon size={20} />
-                <span>{item.name}</span>
-              </Link>
-            );
-          })}
-
-          {inventoryItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                href={item.path}
-                className={`${styles.navLink} ${isActive ? styles.activeNavLink : ''}`}
-              >
-                <Icon size={20} />
-                <span>{item.name}</span>
-              </Link>
-            );
-          })}
-
-          {billingItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.path;
             return (

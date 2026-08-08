@@ -51,7 +51,8 @@ export const addChargeToPatient = async (
       .from('bill_items')
       .insert([{
         bill_id: targetBillId,
-        description: itemName,
+        item_name: itemName,
+        item_type: itemType,
         quantity,
         unit_price: unitPrice,
         amount
