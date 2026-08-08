@@ -1,4 +1,5 @@
 'use client';
+import { useEffect } from 'react';
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -28,6 +29,30 @@ export default function PharmacyLayout({
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
+
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
+
+  useEffect(() => {
+    if (pathname.endsWith('/login')) {
+      setIsAuthChecking(false);
+      return;
+    }
+    const cookieMatch = document.cookie.match(/(?:^|; )demo_auth=([^;]*)/);
+    if (!cookieMatch || cookieMatch[1] !== 'pharmacy') {
+      router.push('/pharmacy/login');
+    } else {
+      setIsAuthChecking(false);
+    }
+  }, [pathname, router]);
+
+  if (pathname.endsWith('/login')) {
+    return <>{children}</>;
+  }
+
+  if (isAuthChecking) {
+    return <div style={{ display: 'flex', height: '100vh', justifyContent: 'center', alignItems: 'center' }}>Loading Portal...</div>;
+  }
+
 
   // Don't show sidebar on login page
   if (pathname === '/pharmacy/login') {
