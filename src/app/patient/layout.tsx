@@ -40,31 +40,22 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
   const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
-
-  const [isAuthChecking, setIsAuthChecking] = useState(true);
+  
 
   useEffect(() => {
     if (pathname.endsWith('/login')) {
-      setIsAuthChecking(false);
       return;
     }
     const cookieMatch = document.cookie.match(/(?:^|; )demo_auth=([^;]*)/);
     if (!cookieMatch || cookieMatch[1] !== 'patient') {
       window.location.href = '/patient/login';
     } else {
-      setIsAuthChecking(false);
-    }
+      }
   }, [pathname, router]);
 
   if (pathname.endsWith('/login')) {
     return <>{children}</>;
   }
-
-  if (isAuthChecking) {
-    return <div style={{ display: 'flex', height: '100vh', justifyContent: 'center', alignItems: 'center' }}>Loading Portal...</div>;
-  }
-
-  
 
   const handleLogout = async () => {
     setLoading(true);

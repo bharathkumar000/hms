@@ -29,20 +29,16 @@ export default function AdminLayout({
   const router = useRouter();
   const supabase = createClient();
 
-  const [isAuthChecking, setIsAuthChecking] = useState(true);
-
   useEffect(() => {
     const checkAuth = async () => {
       if (pathname === '/admin/login') {
-        setIsAuthChecking(false);
         return;
       }
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         window.location.href = '/admin/login';
       } else {
-        setIsAuthChecking(false);
-      }
+        }
     };
     
     checkAuth();
@@ -63,9 +59,7 @@ export default function AdminLayout({
     return <>{children}</>;
   }
 
-  if (isAuthChecking) {
-    return <div style={{ display: 'flex', height: '100vh', justifyContent: 'center', alignItems: 'center' }}>Loading Admin Portal...</div>;
-  }
+
 
   const handleLogout = async () => {
     await supabase.auth.signOut();

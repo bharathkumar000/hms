@@ -114,26 +114,6 @@ export default async function DoctorDashboard() {
         </div>
       </div>
 
-      {/* Quick Action Cards */}
-      <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginTop: '1rem', marginBottom: '-1rem' }}>Quick Actions</h2>
-      <div className={styles.grid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
-        <Link href="/doctor/prescriptions" className={styles.quickActionCard}>
-          <FilePlus size={24} />
-          <span>New Prescription</span>
-        </Link>
-        <Link href="/doctor/lab" className={styles.quickActionCard}>
-          <Microscope size={24} />
-          <span>Order Lab Test</span>
-        </Link>
-        <Link href="/doctor/admissions" className={styles.quickActionCard}>
-          <Bed size={24} />
-          <span>Manage Admissions</span>
-        </Link>
-        <Link href="/doctor/canteen" className={styles.quickActionCard}>
-          <Coffee size={24} />
-          <span>Order Food</span>
-        </Link>
-      </div>
 
       <div className={styles.grid}>
         {/* Today's Schedule List */}
