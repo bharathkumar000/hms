@@ -12,6 +12,7 @@ export default function AdminWardsRooms() {
 
   const [activeTab, setActiveTab] = useState<'wards' | 'rooms'>('wards');
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   // Data State
   const [wards, setWards] = useState<any[]>([]);
