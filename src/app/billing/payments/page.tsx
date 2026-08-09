@@ -2,13 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import { Search, CreditCard, Filter } from 'lucide-react';
+import { Search, CreditCard, Undo2, CheckCircle2 } from 'lucide-react';
+import { useModal } from '@/components/ModalProvider';
 import styles from './payments.module.css';
 
 export default function PaymentsHistoryPage() {
+  const { showAlert } = useModal();
   const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const [refundModalOpen, setRefundModalOpen] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<any>(null);
+  const [refundReason, setRefundReason] = useState('');
+  const [refundAmount, setRefundAmount] = useState<number | ''>('');
   
   const supabase = createClient();
 
@@ -41,6 +48,38 @@ export default function PaymentsHistoryPage() {
 
     setPayments(filteredData);
     setLoading(false);
+  };
+
+  const openRefundModal = (payment: any) => {
+    setSelectedPayment(payment);
+    setRefundAmount(payment.amount);
+    setRefundReason('');
+    setRefundModalOpen(true);
+  };
+
+  const submitRefundRequest = async () => {
+    if (!selectedPayment) return;
+    if (Number(refundAmount) <= 0 || Number(refundAmount) > selectedPayment.amount) {
+      showAlert('Invalid refund amount.');
+      return;
+    }
+
+    const { error } = await supabase
+      .from('refunds')
+      .insert([{
+        payment_id: selectedPayment.id,
+        amount: Number(refundAmount),
+        reason: refundReason,
+        status: 'Pending'
+      }]);
+
+    if (error) {
+      showAlert('Error requesting refund: ' + error.message);
+    } else {
+      showAlert('Refund request submitted successfully.');
+      setRefundModalOpen(false);
+      setSelectedPayment(null);
+    }
   };
 
   return (
@@ -79,6 +118,7 @@ export default function PaymentsHistoryPage() {
                   <th style={{ padding: '1rem' }}>Date</th>
                   <th style={{ padding: '1rem' }}>Method</th>
                   <th style={{ padding: '1rem', textAlign: 'right' }}>Amount</th>
+                  <th style={{ padding: '1rem', textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -90,6 +130,15 @@ export default function PaymentsHistoryPage() {
                     <td style={{ padding: '1rem' }}>{new Date(payment.payment_date).toLocaleString()}</td>
                     <td style={{ padding: '1rem' }}>{payment.payment_method}</td>
                     <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 600, color: 'var(--color-success)' }}>+₹{Number(payment.amount).toFixed(2)}</td>
+                    <td style={{ padding: '1rem', textAlign: 'center' }}>
+                      <button 
+                        onClick={() => openRefundModal(payment)}
+                        className={styles.btnOutline} 
+                        style={{ padding: '0.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.85rem' }}
+                      >
+                        <Undo2 size={14} /> Request Refund
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -102,6 +151,57 @@ export default function PaymentsHistoryPage() {
           </div>
         )}
       </div>
+
+      {refundModalOpen && selectedPayment && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: 'var(--color-background)', padding: '2rem', borderRadius: '12px', width: '90%', maxWidth: '400px', border: '1px solid var(--color-border)' }}>
+            <h2 style={{ marginTop: 0, marginBottom: '1rem' }}>Request Refund</h2>
+            <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1rem', fontSize: '0.9rem' }}>
+              Transaction: {selectedPayment.transaction_id}<br/>
+              Max Refundable: ₹{Number(selectedPayment.amount).toFixed(2)}
+            </p>
+            
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Refund Amount (₹)</label>
+              <input 
+                type="number" 
+                max={selectedPayment.amount}
+                min="0"
+                value={refundAmount}
+                onChange={(e) => setRefundAmount(Number(e.target.value))}
+                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-card-bg)', color: 'var(--color-text-primary)' }}
+              />
+            </div>
+            
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Reason for Refund</label>
+              <textarea 
+                value={refundReason}
+                onChange={(e) => setRefundReason(e.target.value)}
+                rows={3}
+                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-card-bg)', color: 'var(--color-text-primary)', resize: 'vertical' }}
+                placeholder="Enter reason..."
+              />
+            </div>
+            
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+              <button 
+                onClick={() => setRefundModalOpen(false)}
+                style={{ padding: '0.5rem 1rem', background: 'transparent', border: '1px solid var(--color-border)', borderRadius: '6px', color: 'var(--color-text-primary)', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={submitRefundRequest}
+                className={styles.btnPrimary}
+                style={{ padding: '0.5rem 1rem', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              >
+                <CheckCircle2 size={16} /> Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

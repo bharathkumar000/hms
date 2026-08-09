@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import { Search, FileText, Download, Eye } from 'lucide-react';
+import { Search, FileText, Download, Eye, Printer } from 'lucide-react';
+import Link from 'next/link';
 import styles from './invoices.module.css';
 
 export default function InvoicesPage() {
@@ -114,12 +115,11 @@ export default function InvoicesPage() {
                     <td style={{ padding: '1rem' }}>{getStatusBadge(bill.status)}</td>
                     <td style={{ padding: '1rem' }}>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button className={styles.btnOutline} style={{ padding: '0.5rem', display: 'flex', alignItems: 'center' }} title="View Invoice">
-                          <Eye size={16} />
-                        </button>
-                        <button className={styles.btnOutline} style={{ padding: '0.5rem', display: 'flex', alignItems: 'center' }} title="Download Invoice">
-                          <Download size={16} />
-                        </button>
+                        <Link href={`/billing/invoices/print/${bill.id}`} style={{ textDecoration: 'none' }}>
+                          <button className={styles.btnOutline} style={{ padding: '0.5rem', display: 'flex', alignItems: 'center' }} title="View/Print Invoice">
+                            <Printer size={16} />
+                          </button>
+                        </Link>
                       </div>
                     </td>
                   </tr>

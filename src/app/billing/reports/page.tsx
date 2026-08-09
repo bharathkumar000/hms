@@ -15,6 +15,7 @@ export default function FinancialReportsPage() {
     totalOutstanding: 0
   });
   const [recentPayments, setRecentPayments] = useState<any[]>([]);
+  const [revenueByDept, setRevenueByDept] = useState<any[]>([]);
 
   const supabase = createClient();
 
@@ -57,6 +58,30 @@ export default function FinancialReportsPage() {
         .eq('status', 'Pending');
 
       const outstanding = pendingBills?.reduce((sum, b) => sum + (Number(b.total_amount) - Number(b.amount_paid)), 0) || 0;
+
+      // Fetch Revenue by Department/Service
+      const { data: items } = await supabase
+        .from('bill_items')
+        .select(`
+          item_type,
+          amount,
+          bills!inner(status)
+        `)
+        .eq('bills.status', 'Paid');
+
+      if (items) {
+        const grouped = items.reduce((acc: any, item: any) => {
+          acc[item.item_type] = (acc[item.item_type] || 0) + Number(item.amount);
+          return acc;
+        }, {});
+        
+        const formatted = Object.keys(grouped).map(key => ({
+          type: key,
+          amount: grouped[key]
+        })).sort((a, b) => b.amount - a.amount);
+        
+        setRevenueByDept(formatted);
+      }
 
       setMetrics({
         daily,
@@ -140,6 +165,26 @@ export default function FinancialReportsPage() {
                 <p style={{ color: '#b91c1c', marginTop: '1rem', textAlign: 'center', fontSize: '0.9rem' }}>
                   This amount represents all pending bills that have not yet been fully paid by patients.
                 </p>
+              </div>
+            </div>
+
+            {/* Revenue by Department */}
+            <div className={styles.card} style={{ display: 'flex', flexDirection: 'column' }}>
+              <h2 className={styles.cardTitle} style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+                <PieChart size={20} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '8px', color: 'var(--color-primary)' }} />
+                Revenue by Department
+              </h2>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {revenueByDept.length > 0 ? (
+                  revenueByDept.map((dept, index) => (
+                    <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--color-background)', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
+                      <span style={{ fontWeight: 500, color: 'var(--color-text-secondary)' }}>{dept.type}</span>
+                      <span style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--color-primary)' }}>₹{dept.amount.toFixed(2)}</span>
+                    </div>
+                  ))
+                ) : (
+                  <p style={{ textAlign: 'center', color: 'var(--color-text-secondary)', padding: '2rem 0' }}>No department revenue data available.</p>
+                )}
               </div>
             </div>
           </div>

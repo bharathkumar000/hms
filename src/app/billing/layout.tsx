@@ -11,7 +11,9 @@ import {
   CreditCard, 
   Undo2, 
   BarChart3, 
-  LogOut
+  LogOut,
+  Bell,
+  User
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -58,6 +60,8 @@ export default function BillingLayout({
     { name: 'Payments', path: '/billing/payments', icon: CreditCard },
     { name: 'Refunds', path: '/billing/refunds', icon: Undo2 },
     { name: 'Reports', path: '/billing/reports', icon: BarChart3 },
+    { name: 'Notifications', path: '/billing/notifications', icon: Bell },
+    { name: 'Profile', path: '/billing/profile', icon: User },
   ];
 
   return (
