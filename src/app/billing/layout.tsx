@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { 
-  Receipt, 
+  Hospital,
   LayoutDashboard, 
   FileText, 
   Calculator, 
@@ -92,8 +92,8 @@ export default function BillingLayout({
     <div className={styles.layout}>
       <aside className={styles.sidebar}>
         <div className={styles.logo}>
-          <Receipt size={32} />
-          <span>HMS Billing</span>
+          <Hospital size={32} strokeWidth={2.5} />
+          <span>HMS</span>
         </div>
 
         <nav className={styles.nav}>
