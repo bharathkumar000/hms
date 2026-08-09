@@ -53,15 +53,39 @@ export default function BillingLayout({
     router.push('/');
   };
 
-  const navItems = [
-    { name: 'Dashboard', path: '/billing/dashboard', icon: LayoutDashboard },
-    { name: 'Invoices', path: '/billing/invoices', icon: FileText },
-    { name: 'Generate Bill', path: '/billing/generate', icon: Calculator },
-    { name: 'Payments', path: '/billing/payments', icon: CreditCard },
-    { name: 'Refunds', path: '/billing/refunds', icon: Undo2 },
-    { name: 'Reports', path: '/billing/reports', icon: BarChart3 },
-    { name: 'Notifications', path: '/billing/notifications', icon: Bell },
-    { name: 'Profile', path: '/billing/profile', icon: User },
+  const navGroups = [
+    {
+      items: [
+        { name: 'Dashboard', path: '/billing/dashboard', icon: LayoutDashboard },
+      ]
+    },
+    {
+      title: 'Billing',
+      items: [
+        { name: 'Patient Bills', path: '/billing/generate', icon: Calculator },
+        { name: 'Invoices', path: '/billing/invoices', icon: FileText },
+      ]
+    },
+    {
+      title: 'Payments',
+      items: [
+        { name: 'Payments History', path: '/billing/payments', icon: CreditCard },
+        { name: 'Refunds', path: '/billing/refunds', icon: Undo2 },
+      ]
+    },
+    {
+      title: 'Finance',
+      items: [
+        { name: 'Financial Reports', path: '/billing/reports', icon: BarChart3 },
+      ]
+    },
+    {
+      title: 'System',
+      items: [
+        { name: 'Notifications', path: '/billing/notifications', icon: Bell },
+        { name: 'Profile', path: '/billing/profile', icon: User },
+      ]
+    }
   ];
 
   return (
@@ -73,20 +97,25 @@ export default function BillingLayout({
         </div>
 
         <nav className={styles.nav}>
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                href={item.path}
-                className={`${styles.navLink} ${isActive ? styles.activeNavLink : ''}`}
-              >
-                <Icon size={20} />
-                <span>{item.name}</span>
-              </Link>
-            );
-          })}
+          {navGroups.map((group, gIdx) => (
+            <div key={gIdx}>
+              {group.title && <div className={styles.navGroup}>{group.title}</div>}
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.path;
+                return (
+                  <Link
+                    key={item.path}
+                    href={item.path}
+                    className={`${styles.navLink} ${isActive ? styles.activeNavLink : ''}`}
+                  >
+                    <Icon size={20} />
+                    <span>{item.name}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
         <div className={styles.footer}>
