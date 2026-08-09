@@ -30,29 +30,14 @@ export default function AdminLayout({
   const supabase = createClient();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      if (pathname === '/admin/login') {
-        return;
-      }
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        window.location.href = '/admin/login';
-      } else {
-        }
-    };
-    
-    checkAuth();
-    
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT') {
-        router.push('/');
-      }
-    });
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, [pathname, router, supabase]);
+    if (pathname.endsWith('/login')) {
+      return;
+    }
+    const cookieMatch = document.cookie.match(/(?:^|; )demo_auth=([^;]*)/);
+    if (!cookieMatch || cookieMatch[1] !== 'admin') {
+      window.location.href = '/admin/login';
+    }
+  }, [pathname, router]);
 
   // Don't show sidebar on login page
   if (pathname === '/admin/login') {
@@ -62,7 +47,10 @@ export default function AdminLayout({
 
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    document.cookie = 'demo_auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {}
     router.push('/');
   };
 
