@@ -6,4 +6,5 @@ export const DEMO_USERS: Record<string, { id: string; pass: string }> = {
   pharmacy: { id: '5', pass: '5' },
   admin: { id: '6', pass: '6' },
   billing: { id: '7', pass: '7' },
+  canteen: { id: '8', pass: '8' },
 };

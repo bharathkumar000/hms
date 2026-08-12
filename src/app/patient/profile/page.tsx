@@ -9,6 +9,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
+  const [userId, setUserId] = useState<string | null>(null);
   
   const [profile, setProfile] = useState({
     first_name: '',
@@ -26,8 +27,11 @@ export default function ProfilePage() {
 
   useEffect(() => {
     async function loadProfile() {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user || (await supabase.auth.getUser()).data.user;
+      
       if (user) {
+        setUserId(user.id);
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
@@ -53,26 +57,52 @@ export default function ProfilePage() {
     setSaving(true);
     setMessage({ text: '', type: '' });
     
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (user) {
+    try {
+      let activeUserId = userId;
+      
+      // Fallback if state was lost
+      if (!activeUserId) {
+        const { data: { session } } = await supabase.auth.getSession();
+        activeUserId = session?.user?.id || (await supabase.auth.getUser()).data.user?.id || null;
+      }
+      
+      if (!activeUserId) {
+        setMessage({ text: 'Error: User not authenticated. Please refresh the page.', type: 'error' });
+        setSaving(false);
+        return;
+      }
+
+      // Convert empty strings to null for better database compatibility
+      const cleanData = {
+        id: activeUserId, 
+        first_name: profile.first_name || null,
+        last_name: profile.last_name || null,
+        date_of_birth: profile.date_of_birth ? profile.date_of_birth : null,
+        gender: profile.gender || null,
+        phone_number: profile.phone_number || null,
+        address: profile.address || null,
+        emergency_contact_name: profile.emergency_contact_name || null,
+        emergency_contact_phone: profile.emergency_contact_phone || null,
+        blood_group: profile.blood_group || null,
+        insurance_provider: profile.insurance_provider || null,
+        insurance_policy_number: profile.insurance_policy_number || null,
+        updated_at: new Date().toISOString()
+      };
+
+      // If this is the mock demo user, simulate a successful save to avoid PostgreSQL UUID & RLS errors
+      if (activeUserId === 'demo-user-id') {
+        // We simulate saving to local storage so the form retains the data in demo mode if desired,
+        // but for now, we just show the success message.
+        setTimeout(() => {
+          setMessage({ text: 'Profile updated successfully! (Demo Mode)', type: 'success' });
+          setSaving(false);
+        }, 800);
+        return;
+      }
+
       const { error } = await supabase
         .from('profiles')
-        .upsert({ 
-          id: user.id, 
-          first_name: profile.first_name,
-          last_name: profile.last_name,
-          date_of_birth: profile.date_of_birth || null,
-          gender: profile.gender || null,
-          phone_number: profile.phone_number,
-          address: profile.address,
-          emergency_contact_name: profile.emergency_contact_name,
-          emergency_contact_phone: profile.emergency_contact_phone,
-          blood_group: profile.blood_group,
-          insurance_provider: profile.insurance_provider,
-          insurance_policy_number: profile.insurance_policy_number,
-          updated_at: new Date().toISOString()
-        });
+        .upsert(cleanData);
         
       if (error) {
         console.error('Profile save error:', error);
@@ -80,8 +110,12 @@ export default function ProfilePage() {
       } else {
         setMessage({ text: 'Profile updated successfully!', type: 'success' });
       }
+    } catch (err: any) {
+      console.error('Unexpected error:', err);
+      setMessage({ text: `An unexpected error occurred: ${err.message || 'Unknown error'}`, type: 'error' });
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   if (loading) return <div>Loading profile...</div>;

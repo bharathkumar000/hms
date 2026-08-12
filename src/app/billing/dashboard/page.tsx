@@ -10,7 +10,8 @@ import {
   Activity,
   Calculator,
   BarChart3,
-  Undo2
+  Undo2,
+  PieChart
 } from 'lucide-react';
 import Link from 'next/link';
 import styles from './dashboard.module.css';
@@ -21,9 +22,11 @@ export default function BillingDashboard() {
     todayRevenue: 0,
     monthlyRevenue: 0,
     pendingPayments: 0,
-    totalTransactions: 0
+    totalTransactions: 0,
+    totalRefunds: 0
   });
   const [recentBills, setRecentBills] = useState<any[]>([]);
+  const [revenueByService, setRevenueByService] = useState<{type: string, amount: number}[]>([]);
   const supabase = createClient();
 
   useEffect(() => {
@@ -66,12 +69,51 @@ export default function BillingDashboard() {
         .from('payments')
         .select('*', { count: 'exact', head: true });
 
+      // 5. Fetch Total Refunds Amount (this month)
+      const { data: monthRefunds } = await supabase
+        .from('refunds')
+        .select('amount')
+        .eq('status', 'Approved')
+        .gte('created_at', firstDayOfMonth.toISOString());
+        
+      const totalRefundsAmount = monthRefunds?.reduce((sum, r) => sum + Number(r.amount), 0) || 0;
+
       setMetrics({
         todayRevenue: todayRev,
         monthlyRevenue: monthRev,
         pendingPayments: pendingCount || 0,
-        totalTransactions: totalTrans || 0
+        totalTransactions: totalTrans || 0,
+        totalRefunds: totalRefundsAmount
       });
+
+      // Fetch Revenue by Service Type
+      const { data: paidBills } = await supabase
+        .from('bills')
+        .select('id')
+        .eq('status', 'Paid')
+        .gte('created_at', firstDayOfMonth.toISOString());
+
+      if (paidBills && paidBills.length > 0) {
+        const paidBillIds = paidBills.map(b => b.id);
+        const { data: items } = await supabase
+          .from('bill_items')
+          .select('item_type, amount')
+          .in('bill_id', paidBillIds);
+
+        if (items) {
+          const grouped = items.reduce((acc: any, item: any) => {
+            acc[item.item_type] = (acc[item.item_type] || 0) + Number(item.amount);
+            return acc;
+          }, {});
+          
+          const formatted = Object.keys(grouped).map(key => ({
+            type: key,
+            amount: grouped[key]
+          })).sort((a, b) => b.amount - a.amount);
+          
+          setRevenueByService(formatted);
+        }
+      }
 
       // Fetch Recent Bills
       const { data: bills } = await supabase
@@ -158,9 +200,47 @@ export default function BillingDashboard() {
           </div>
           <div className={styles.statValue}>{metrics.totalTransactions}</div>
         </div>
+
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <div className={styles.iconWrapper} style={{ backgroundColor: '#fee2e2', color: '#ef4444' }}>
+              <Undo2 size={24} />
+            </div>
+            <h2 className={styles.cardTitle}>Monthly Refunds</h2>
+          </div>
+          <div className={styles.statValue} style={{ color: '#b91c1c' }}>
+            ₹{metrics.totalRefunds.toFixed(2)}
+          </div>
+        </div>
       </div>
 
-      <div className={styles.grid} style={{ gridTemplateColumns: '1fr' }}>
+      <div className={styles.grid} style={{ gridTemplateColumns: '1fr 1fr' }}>
+        {/* Revenue By Service */}
+        <div className={styles.card}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <h2 className={styles.cardTitle} style={{ margin: 0 }}>
+              <PieChart size={20} style={{ display: 'inline', marginRight: '0.5rem', verticalAlign: 'text-bottom' }} />
+              Revenue by Service
+            </h2>
+          </div>
+          
+          {loading ? (
+            <p>Loading revenue data...</p>
+          ) : revenueByService.length > 0 ? (
+            <div className={styles.list}>
+              {revenueByService.map((service, index) => (
+                <div key={index} className={styles.listItem} style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', borderBottom: '1px solid var(--color-border)' }}>
+                  <div style={{ fontWeight: 500, color: 'var(--color-text-primary)' }}>{service.type}</div>
+                  <div style={{ fontWeight: 600, color: 'var(--color-primary)' }}>₹{service.amount.toFixed(2)}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-text-secondary)' }}>
+              No service revenue recorded this month.
+            </div>
+          )}
+        </div>
 
         {/* Recent Bills */}
         <div className={styles.card}>

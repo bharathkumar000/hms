@@ -12,7 +12,8 @@ import {
   FlaskConical, 
   Pill, 
   ShieldCheck,
-  Receipt
+  Receipt,
+  Coffee
 } from 'lucide-react';
 
 const modules = [
@@ -57,6 +58,12 @@ const modules = [
     description: 'Manage Billing, Payments, Revenue & Financial Records',
     icon: Receipt,
     href: '/billing/login'
+  },
+  {
+    title: 'Canteen Portal',
+    description: 'Manage food orders, kitchen operations, and canteen deliveries.',
+    icon: Coffee,
+    href: '/canteen/login'
   }
 ];
 

@@ -1,0 +1,166 @@
+.printContainer {
+  background: white;
+  min-height: 100vh;
+  padding: 40px;
+  color: #333;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.invoiceWrapper {
+  max-width: 800px;
+  margin: 0 auto;
+  border: 1px solid #e5e7eb;
+  padding: 40px;
+  border-radius: 8px;
+  background: white;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 40px;
+  border-bottom: 2px solid #f3f4f6;
+  padding-bottom: 20px;
+}
+
+.hospitalInfo h1 {
+  font-size: 24px;
+  margin: 0 0 5px 0;
+  color: #111827;
+}
+
+.hospitalInfo p {
+  margin: 2px 0;
+  color: #4b5563;
+  font-size: 14px;
+}
+
+.invoiceDetails {
+  text-align: right;
+}
+
+.invoiceDetails h2 {
+  font-size: 28px;
+  color: #3b82f6;
+  margin: 0 0 10px 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.invoiceDetails p {
+  margin: 4px 0;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.patientSection {
+  margin-bottom: 40px;
+}
+
+.patientSection h3 {
+  font-size: 16px;
+  color: #6b7280;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.patientGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  background: #f9fafb;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.patientGrid p {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 30px;
+}
+
+.table th, .table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.table th {
+  background: #f9fafb;
+  color: #374151;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.table td {
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.totals {
+  width: 300px;
+  margin-left: auto;
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.grandTotal {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  margin-top: 8px;
+  border-top: 2px solid #e5e7eb;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.footer {
+  margin-top: 60px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 20px;
+}
+
+.noPrint {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.printBtn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+@media print {
+  .noPrint {
+    display: none;
+  }
+  .printContainer {
+    padding: 0;
+  }
+  .invoiceWrapper {
+    border: none;
+    padding: 0;
+  }
+}

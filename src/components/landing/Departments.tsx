@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { ArrowRight } from 'lucide-react';
 import styles from './Departments.module.css';
 import landingStyles from '@/app/landing.module.css';
 
@@ -32,7 +31,6 @@ export default function Departments() {
         {departments.map((dept, index) => (
           <div key={index} className={styles.deptCard}>
             <span className={styles.deptName}>{dept}</span>
-            <ArrowRight size={18} />
           </div>
         ))}
       </div>

@@ -9,7 +9,7 @@ import styles from './users.module.css';
 export default function AdminUsers() {
   const { showAlert, showConfirm } = useModal();
 
-  const [activeTab, setActiveTab] = useState<'doctors' | 'reception_staff' | 'lab_staff' | 'pharmacists' | 'profiles'>('doctors');
+  const [activeTab, setActiveTab] = useState<'doctors' | 'nurses' | 'reception_staff' | 'lab_staff' | 'pharmacists' | 'admins' | 'profiles'>('doctors');
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -17,6 +17,7 @@ export default function AdminUsers() {
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({ 
     first_name: '', 
@@ -25,6 +26,7 @@ export default function AdminUsers() {
     phone_number: '', 
     specialization: '', 
     department: '',
+    department_id: '',
     role: 'Technician' // for lab_staff
   });
 
@@ -36,7 +38,14 @@ export default function AdminUsers() {
 
   const fetchUsers = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from(activeTab).select('*').order('created_at', { ascending: false });
+    let query = supabase.from(activeTab).select('*').order('created_at', { ascending: false });
+    
+    // For nurses, also fetch department info if possible
+    if (activeTab === 'nurses') {
+      query = supabase.from(activeTab).select('*, departments(name)').order('created_at', { ascending: false });
+    }
+
+    const { data, error } = await query;
     
     if (data) setUsers(data);
     else if (error) console.error(error);
@@ -45,7 +54,7 @@ export default function AdminUsers() {
   };
 
   const resetForm = () => {
-    setFormData({ first_name: '', last_name: '', email: '', phone_number: '', specialization: '', department: '', role: 'Technician' });
+    setFormData({ first_name: '', last_name: '', email: '', phone_number: '', specialization: '', department: '', department_id: '', role: 'Technician' });
     setEditMode(false);
     setEditingId(null);
   };
@@ -63,6 +72,7 @@ export default function AdminUsers() {
       phone_number: user.phone_number || '',
       specialization: user.specialization || '',
       department: user.department || '',
+      department_id: user.department_id || '',
       role: user.role || 'Technician'
     });
     setEditingId(user.id);
@@ -70,10 +80,11 @@ export default function AdminUsers() {
     setShowModal(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSaveUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
     
-    const insertData: any = {
+    let insertData: any = {
       first_name: formData.first_name,
       last_name: formData.last_name,
       email: formData.email,
@@ -83,6 +94,8 @@ export default function AdminUsers() {
     if (activeTab === 'doctors') {
       insertData.specialization = formData.specialization;
       insertData.department = formData.department;
+    } else if (activeTab === 'nurses') {
+      insertData.department_id = formData.department_id || null;
     } else if (activeTab === 'lab_staff') {
       insertData.role = formData.role;
     } else if (activeTab === 'profiles') {
@@ -108,6 +121,7 @@ export default function AdminUsers() {
         fetchUsers();
       }
     }
+    setSubmitting(false);
   };
 
   const handleDelete = async (id: string) => {
@@ -118,8 +132,11 @@ export default function AdminUsers() {
   };
 
   const toggleStatus = async (id: string, currentStatus: boolean) => {
-    if (activeTab !== 'doctors') return; 
-    await supabase.from('doctors').update({ available: !currentStatus }).eq('id', id);
+    if (activeTab === 'doctors') {
+      await supabase.from('doctors').update({ available: !currentStatus }).eq('id', id);
+    } else if (activeTab === 'nurses') {
+      await supabase.from('nurses').update({ status: currentStatus ? 'Inactive' : 'Active' }).eq('id', id);
+    }
     fetchUsers();
   };
 
@@ -150,8 +167,8 @@ export default function AdminUsers() {
       </header>
 
       <div className={styles.card}>
-        <div className={styles.tabs}>
-          {['doctors', 'reception_staff', 'lab_staff', 'pharmacists', 'profiles'].map(tab => (
+        <div className={styles.tabs} style={{ display: 'flex', flexWrap: 'wrap', marginBottom: '1.5rem', gap: '2rem' }}>
+          {['doctors', 'nurses', 'reception_staff', 'lab_staff', 'pharmacists', 'admins', 'profiles'].map(tab => (
             <button 
               key={tab}
               className={`${styles.tab} ${activeTab === tab ? styles.activeTab : ''}`} 
@@ -186,11 +203,12 @@ export default function AdminUsers() {
                 <tr>
                   <th>Name</th>
                   {activeTab !== 'profiles' && <th>Email</th>}
-                  <th>Phone</th>
+                  {activeTab !== 'admins' && <th>Phone</th>}
                   {activeTab === 'doctors' && <th>Specialization</th>}
                   {activeTab === 'doctors' && <th>Department</th>}
+                  {activeTab === 'nurses' && <th>Department</th>}
                   {activeTab === 'lab_staff' && <th>Role</th>}
-                  {activeTab === 'doctors' && <th>Status</th>}
+                  {(activeTab === 'doctors' || activeTab === 'nurses') && <th>Status</th>}
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -199,29 +217,38 @@ export default function AdminUsers() {
                   <tr key={user.id}>
                     <td style={{ fontWeight: 600 }}>{user.first_name} {user.last_name}</td>
                     {activeTab !== 'profiles' && <td>{user.email || 'N/A'}</td>}
-                    <td>{user.phone_number || 'N/A'}</td>
+                    {activeTab !== 'admins' && <td>{user.phone_number || 'N/A'}</td>}
                     {activeTab === 'doctors' && <td>{user.specialization}</td>}
                     {activeTab === 'doctors' && <td>{user.department}</td>}
+                    {activeTab === 'nurses' && <td>{user.departments?.name || '-'}</td>}
                     {activeTab === 'lab_staff' && <td>{user.role}</td>}
-                    {activeTab === 'doctors' && (
+                    {(activeTab === 'doctors' || activeTab === 'nurses') && (
                       <td>
-                        {user.available ? (
-                           <span className={`${styles.badge} ${styles.badgeSuccess}`}>Active</span>
+                        {activeTab === 'doctors' ? (
+                          user.available ? (
+                            <span className={`${styles.badge} ${styles.badgeSuccess}`}>Active</span>
+                          ) : (
+                            <span className={`${styles.badge} ${styles.badgeDanger}`}>Inactive</span>
+                          )
                         ) : (
-                           <span className={`${styles.badge} ${styles.badgeDanger}`}>Inactive</span>
+                          user.status === 'Active' ? (
+                            <span className={`${styles.badge} ${styles.badgeSuccess}`}>Active</span>
+                          ) : (
+                            <span className={`${styles.badge} ${styles.badgeDanger}`}>Inactive</span>
+                          )
                         )}
                       </td>
                     )}
                     <td>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        {activeTab === 'doctors' && (
+                        {(activeTab === 'doctors' || activeTab === 'nurses') && (
                           <button 
                             className={styles.btnOutline} 
-                            style={{ padding: '0.4rem', border: 'none', color: user.available ? '#dc2626' : '#166534' }}
-                            onClick={() => toggleStatus(user.id, user.available)}
-                            title={user.available ? "Deactivate" : "Activate"}
+                            style={{ padding: '0.4rem', border: 'none', color: (activeTab === 'doctors' ? user.available : user.status === 'Active') ? '#dc2626' : '#166534' }}
+                            onClick={() => toggleStatus(user.id, activeTab === 'doctors' ? user.available : user.status === 'Active')}
+                            title={(activeTab === 'doctors' ? user.available : user.status === 'Active') ? "Deactivate" : "Activate"}
                           >
-                            {user.available ? <UserX size={18} /> : <UserCheck size={18} />}
+                            {(activeTab === 'doctors' ? user.available : user.status === 'Active') ? <UserX size={18} /> : <UserCheck size={18} />}
                           </button>
                         )}
                         <button 
@@ -246,7 +273,7 @@ export default function AdminUsers() {
                 ))}
                 {filteredUsers.length === 0 && (
                   <tr>
-                    <td colSpan={8} style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-secondary)' }}>
+                    <td colSpan={9} style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-secondary)' }}>
                       No {getTabLabel(activeTab).toLowerCase()} found.
                     </td>
                   </tr>
@@ -263,7 +290,7 @@ export default function AdminUsers() {
             <h2 style={{ marginBottom: '1.5rem', textTransform: 'capitalize' }}>
               {editMode ? 'Edit' : 'Add New'} {getTabLabel(activeTab).slice(0, -1)}
             </h2>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSaveUser}>
               <div style={{ display: 'flex', gap: '1rem' }}>
                 <div className={styles.formGroup} style={{ flex: 1 }}>
                   <label>First Name</label>
@@ -282,10 +309,12 @@ export default function AdminUsers() {
                 </div>
               )}
               
-              <div className={styles.formGroup}>
-                <label>Phone Number</label>
-                <input type="tel" value={formData.phone_number} onChange={e => setFormData({...formData, phone_number: e.target.value})} />
-              </div>
+              {activeTab !== 'admins' && (
+                <div className={styles.formGroup}>
+                  <label>Phone Number</label>
+                  <input type="tel" value={formData.phone_number} onChange={e => setFormData({...formData, phone_number: e.target.value})} />
+                </div>
+              )}
 
               {activeTab === 'doctors' && (
                 <>
@@ -294,10 +323,17 @@ export default function AdminUsers() {
                     <input required type="text" value={formData.specialization} onChange={e => setFormData({...formData, specialization: e.target.value})} />
                   </div>
                   <div className={styles.formGroup}>
-                    <label>Department</label>
+                    <label>Department (Text)</label>
                     <input required type="text" value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})} />
                   </div>
                 </>
+              )}
+
+              {activeTab === 'nurses' && (
+                <div className={styles.formGroup}>
+                  <label>Department ID (UUID optional)</label>
+                  <input type="text" value={formData.department_id} onChange={e => setFormData({...formData, department_id: e.target.value})} placeholder="e.g. 123e4567-e89b-12d3-a456-426614174000" />
+                </div>
               )}
 
               {activeTab === 'lab_staff' && (
@@ -312,7 +348,9 @@ export default function AdminUsers() {
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
                 <button type="button" className={styles.btnOutline} onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className={styles.btnPrimary}>{editMode ? 'Save Changes' : 'Save User'}</button>
+                <button type="submit" className={styles.btnPrimary} disabled={submitting}>
+                  {submitting ? 'Saving...' : 'Save User'}
+                </button>
               </div>
             </form>
           </div>

@@ -32,9 +32,7 @@ export async function createClient() {
               cookieStore.set(name, value, options)
             )
           } catch {
-            // The `setAll` method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing
-            // user sessions.
+            // Ignore
           }
         },
       },
@@ -51,7 +49,7 @@ export async function createClient() {
       return {
         data: {
           user: {
-            id: 'demo-user-id',
+            id: '11111111-1111-1111-1111-111111111111',
             email: `demo@${demoAuthCookie.value}.com`,
             role: demoAuthCookie.value,
           }

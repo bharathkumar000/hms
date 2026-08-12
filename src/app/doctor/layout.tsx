@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
@@ -14,7 +14,9 @@ import {
   Microscope,
   BarChart,
   Settings,
-  LogOut
+  LogOut,
+  Bed,
+  Coffee
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import styles from './layout.module.css';
@@ -24,10 +26,12 @@ const navItems = [
   { name: 'Schedule', href: '/doctor/schedule', icon: Calendar },
   { name: 'Consultations', href: '/doctor/consultations', icon: MessageSquare },
   { name: 'Emergencies', href: '/doctor/emergencies', icon: AlertCircle },
+  { name: 'Admissions', href: '/doctor/admissions', icon: Bed },
   { name: 'Patients', href: '/doctor/patients', icon: Users },
   { name: 'Prescriptions', href: '/doctor/prescriptions', icon: FileSignature },
   { name: 'Lab Reports', href: '/doctor/lab', icon: Microscope },
   { name: 'Reports', href: '/doctor/reports', icon: BarChart },
+  { name: 'Canteen', href: '/doctor/canteen', icon: Coffee },
   { name: 'Settings', href: '/doctor/settings', icon: Settings },
 ];
 
@@ -36,6 +40,22 @@ export default function DoctorLayout({ children }: { children: React.ReactNode }
   const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
+  
+
+  useEffect(() => {
+    if (pathname.endsWith('/login')) {
+      return;
+    }
+    const cookieMatch = document.cookie.match(/(?:^|; )demo_auth=([^;]*)/);
+    if (!cookieMatch || cookieMatch[1] !== 'doctor') {
+      window.location.href = '/doctor/login';
+    } else {
+      }
+  }, [pathname, router]);
+
+  if (pathname.endsWith('/login')) {
+    return <>{children}</>;
+  }
 
   const handleLogout = async () => {
     setLoading(true);

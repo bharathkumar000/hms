@@ -20,6 +20,11 @@ export default function DoctorSettings() {
   const [leaveReason, setLeaveReason] = useState('');
   const [leaveRequests, setLeaveRequests] = useState<any[]>([]);
 
+  // Availability
+  const [workingDays, setWorkingDays] = useState<string[]>([]);
+  const [workingHours, setWorkingHours] = useState('');
+  const [availabilityId, setAvailabilityId] = useState<string | null>(null);
+
   const supabase = createClient();
   const [doctorId, setDoctorId] = useState<string | null>(null);
 
@@ -41,6 +46,14 @@ export default function DoctorSettings() {
       // Fetch Leave Requests
       const { data: leaves } = await supabase.from('leave_requests').select('*').eq('doctor_id', uid).order('created_at', { ascending: false });
       if (leaves) setLeaveRequests(leaves);
+
+      // Fetch Availability
+      const { data: avail } = await supabase.from('doctor_availability').select('*').eq('doctor_id', prof.id).single();
+      if (avail) {
+        setAvailabilityId(avail.id);
+        setWorkingDays(avail.working_days || []);
+        setWorkingHours(avail.working_hours || '');
+      }
     }
     setLoading(false);
   };
@@ -73,6 +86,38 @@ export default function DoctorSettings() {
     fetchData();
     setSaving(false);
     showAlert('Leave request submitted');
+  };
+
+  const handleUpdateAvailability = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!doctorId) return;
+    setSaving(true);
+    
+    // get doctor table id
+    const { data: prof } = await supabase.from('doctors').select('id').eq('user_id', doctorId).single();
+    if (!prof) return;
+
+    const payload = {
+      doctor_id: prof.id,
+      working_days: workingDays,
+      working_hours: workingHours
+    };
+
+    if (availabilityId) {
+      await supabase.from('doctor_availability').update(payload).eq('id', availabilityId);
+    } else {
+      const { data } = await supabase.from('doctor_availability').insert(payload).select().single();
+      if (data) setAvailabilityId(data.id);
+    }
+
+    setSaving(false);
+    showAlert('Working hours updated successfully');
+  };
+
+  const toggleDay = (day: string) => {
+    setWorkingDays(prev => 
+      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+    );
   };
 
   if (loading) return <div className={styles.container}><p>Loading settings...</p></div>;
@@ -128,6 +173,43 @@ export default function DoctorSettings() {
             </div>
           </div>
           <button type="submit" className={styles.btnPrimary} disabled={saving}>Save Profile</button>
+        </form>
+      </div>
+
+      {/* Working Hours */}
+      <div className={styles.card}>
+        <h2 className={styles.sectionTitle}>Working Hours</h2>
+        <form onSubmit={handleUpdateAvailability}>
+          <div className={styles.formGrid}>
+            <div className={styles.formGroupFull}>
+              <label className={styles.label}>Working Days</label>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
+                  <button
+                    key={day}
+                    type="button"
+                    onClick={() => toggleDay(day)}
+                    className={workingDays.includes(day) ? styles.btnPrimary : styles.btnOutline}
+                    style={{ padding: '0.5rem 1rem', borderRadius: '999px', fontSize: '0.85rem' }}
+                  >
+                    {day}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Working Hours</label>
+              <input 
+                type="text" 
+                className={styles.input} 
+                required
+                placeholder="e.g. 09:00 AM - 05:00 PM"
+                value={workingHours}
+                onChange={e => setWorkingHours(e.target.value)}
+              />
+            </div>
+          </div>
+          <button type="submit" className={styles.btnPrimary} disabled={saving} style={{ marginTop: '1.5rem' }}>Save Schedule</button>
         </form>
       </div>
 

@@ -12,7 +12,8 @@ export default function DoctorReports() {
     pending: 0,
     emergencies: 0,
     prescriptions: 0,
-    labOrders: 0
+    labOrders: 0,
+    admissions: 0
   });
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
@@ -25,11 +26,12 @@ export default function DoctorReports() {
     setLoading(true);
     const today = new Date().toISOString().split('T')[0];
 
-    const [appointments, emergencies, prescriptions, labOrders] = await Promise.all([
+    const [appointments, emergencies, prescriptions, labOrders, admissions] = await Promise.all([
       supabase.from('appointments').select('*').eq('appointment_date', today),
       supabase.from('emergency_cases').select('*').eq('status', 'Active'),
       supabase.from('prescriptions').select('*').gte('created_at', `${today}T00:00:00Z`),
-      supabase.from('lab_orders').select('*').gte('created_at', `${today}T00:00:00Z`)
+      supabase.from('lab_orders').select('*').gte('created_at', `${today}T00:00:00Z`),
+      supabase.from('admissions').select('*').eq('admission_date', today)
     ]);
 
     const apts = appointments.data || [];
@@ -40,7 +42,8 @@ export default function DoctorReports() {
       pending: apts.filter(a => a.status === 'Upcoming').length,
       emergencies: emergencies.data?.length || 0,
       prescriptions: prescriptions.data?.length || 0,
-      labOrders: labOrders.data?.length || 0
+      labOrders: labOrders.data?.length || 0,
+      admissions: admissions.data?.length || 0
     });
 
     setLoading(false);
@@ -78,6 +81,10 @@ export default function DoctorReports() {
             <div className={styles.card}>
               <div className={styles.statValue} style={{ color: '#dc2626' }}>{stats.emergencies}</div>
               <div className={styles.statLabel}>Active Emergencies</div>
+            </div>
+            <div className={styles.card}>
+              <div className={styles.statValue} style={{ color: '#4338ca' }}>{stats.admissions}</div>
+              <div className={styles.statLabel}>New Admissions</div>
             </div>
           </div>
 

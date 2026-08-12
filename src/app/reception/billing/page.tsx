@@ -21,9 +21,8 @@ export default function ReceptionBilling() {
   const [description, setDescription] = useState('');
 
   // Modal State for Payment
-  const [showPayModal, setShowPayModal] = useState(false);
-  const [selectedBill, setSelectedBill] = useState<any>(null);
-  const [payMethod, setPayMethod] = useState('Cash');
+  // Removed payment modal state as per requirements
+  const [showRedirectModal, setShowRedirectModal] = useState(false);
 
   const supabase = createClient();
 
@@ -79,33 +78,10 @@ export default function ReceptionBilling() {
     }
   };
 
-  const openPayModal = (bill: any) => {
-    setSelectedBill(bill);
-    setShowPayModal(true);
-  };
 
-  const handlePayment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // 1. Insert Payment
-    const { error: payError } = await supabase.from('payments').insert({
-      bill_id: selectedBill.id,
-      patient_id: selectedBill.patient_id,
-      amount: selectedBill.amount,
-      payment_method: payMethod,
-      transaction_id: `TXN-${Math.floor(Math.random()*1000000)}`
-    });
 
-    if (payError) {
-      showAlert('Payment failed: ' + payError.message);
-      return;
-    }
-
-    // 2. Update Bill Status
-    await supabase.from('bills').update({ status: 'Paid' }).eq('id', selectedBill.id);
-
-    setShowPayModal(false);
-    fetchData();
+  const handlePayment = () => {
+    setShowRedirectModal(true);
   };
 
   return (
@@ -142,8 +118,8 @@ export default function ReceptionBilling() {
                       {bill.status}
                     </span>
                     {bill.status === 'Pending' && (
-                      <button className={styles.btnOutline} onClick={() => openPayModal(bill)}>
-                        Accept Payment
+                      <button className={styles.btnOutline} onClick={handlePayment}>
+                        Process Payment
                       </button>
                     )}
                   </div>
@@ -215,35 +191,28 @@ export default function ReceptionBilling() {
         </div>
       )}
 
-      {/* Payment Modal */}
-      {showPayModal && selectedBill && (
+      {/* Redirect Modal */}
+      {showRedirectModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modal}>
-            <h2 className={styles.modalTitle}>Accept Payment</h2>
-            
-            <div style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: 'var(--color-light)', borderRadius: '8px' }}>
-              <p style={{ margin: '0 0 0.5rem 0', fontWeight: 600 }}>Patient: {selectedBill.profiles?.first_name} {selectedBill.profiles?.last_name}</p>
-              <p style={{ margin: '0 0 0.5rem 0' }}>Bill: {selectedBill.description}</p>
-              <p style={{ margin: '0', fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-primary)' }}>
-                Total Due: ${Number(selectedBill.amount).toFixed(2)}
+            <h2 className={styles.modalTitle}>Payment Required</h2>
+            <div style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: 'var(--color-light)', borderRadius: '8px', textAlign: 'center' }}>
+              <p style={{ margin: '0 0 1rem 0', fontWeight: 500 }}>
+                Payments cannot be processed in the Reception Portal.
+              </p>
+              <p style={{ margin: '0', color: 'var(--color-text-secondary)' }}>
+                Please direct the patient to the Billing Counter, or log in to the Billing Portal to process this transaction.
               </p>
             </div>
-
-            <form onSubmit={handlePayment}>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>Payment Method</label>
-                <select className={styles.input} required value={payMethod} onChange={e => setPayMethod(e.target.value)}>
-                  <option value="Cash">Cash</option>
-                  <option value="Card">Credit/Debit Card</option>
-                  <option value="UPI">UPI / Digital Wallet</option>
-                </select>
-              </div>
-
-              <div className={styles.modalActions}>
-                <button type="button" className={styles.btnOutline} onClick={() => setShowPayModal(false)}>Cancel</button>
-                <button type="submit" className={styles.btnPrimary}>Process Payment</button>
-              </div>
-            </form>
+            <div className={styles.modalActions}>
+              <button type="button" className={styles.btnOutline} onClick={() => setShowRedirectModal(false)}>Close</button>
+              <button type="button" className={styles.btnPrimary} onClick={() => {
+                setShowRedirectModal(false);
+                window.open('/billing/login', '_blank');
+              }}>
+                Open Billing Portal
+              </button>
+            </div>
           </div>
         </div>
       )}

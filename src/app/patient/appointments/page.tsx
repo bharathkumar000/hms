@@ -2,35 +2,54 @@
 import { useModal } from '@/components/ModalProvider';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { addChargeToPatient } from '@/utils/billing';
 import styles from './appointments.module.css';
 
 export default function AppointmentsPage() {
   const { showAlert, showConfirm } = useModal();
-
+  const searchParams = useSearchParams();
+  
   const supabase = createClient();
   const [appointments, setAppointments] = useState<any[]>([]);
   const [doctors, setDoctors] = useState<any[]>([]);
+  const [liveQueue, setLiveQueue] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeUserId, setActiveUserId] = useState<string | null>(null);
   
   // New appointment form state
+  const [isRescheduling, setIsRescheduling] = useState<string | null>(null);
   const [doctorId, setDoctorId] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [reason, setReason] = useState('');
 
   const fetchAppointments = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user || (await supabase.auth.getUser()).data.user;
+    
     if (user) {
+      setActiveUserId(user.id);
       const { data } = await supabase
         .from('appointments')
         .select('*, doctors(first_name, last_name, specialization)')
         .eq('patient_id', user.id)
         .order('appointment_date', { ascending: false });
       
-      if (data) setAppointments(data);
+      let finalAppointments = data || [];
+      
+      // If demo mode, merge in simulated appointments from local storage
+      if (user.id === 'demo-user-id') {
+        const demoApts = JSON.parse(localStorage.getItem('demo_appointments') || '[]');
+        // Filter out Cancelled appointments for demo mode as requested
+        const activeDemoApts = demoApts.filter((apt: any) => apt.status !== 'Cancelled');
+        finalAppointments = [...activeDemoApts, ...finalAppointments].sort((a, b) => new Date(b.appointment_date).getTime() - new Date(a.appointment_date).getTime());
+      }
+      
+      if (finalAppointments.length >= 0) setAppointments(finalAppointments);
     }
   };
 
@@ -39,62 +58,195 @@ export default function AppointmentsPage() {
     if (data) setDoctors(data);
   };
 
+  const fetchLiveQueue = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user || (await supabase.auth.getUser()).data.user;
+    
+    if (user) {
+      // Get today's date in string format (YYYY-MM-DD)
+      const today = new Date().toISOString().split('T')[0];
+      
+      const { data } = await supabase
+        .from('patient_queue')
+        .select('*, doctors(first_name, last_name)')
+        .eq('patient_id', user.id)
+        .gte('created_at', today) // Simplistic check for today's queue
+        .in('status', ['Waiting', 'In Progress'])
+        .limit(1)
+        .single();
+      
+      if (data) setLiveQueue(data);
+      else setLiveQueue(null);
+    }
+  };
+
   useEffect(() => {
-    Promise.all([fetchAppointments(), fetchDoctors()]).then(() => setLoading(false));
-  }, [supabase]);
+    Promise.all([fetchAppointments(), fetchDoctors(), fetchLiveQueue()]).then(() => {
+      setLoading(false);
+      if (searchParams.get('action') === 'book') {
+        setIsModalOpen(true);
+      }
+    });
+  }, [supabase, searchParams]);
 
   const handleBook = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { data: { user } } = await supabase.auth.getUser();
+    setIsSubmitting(true);
     
-    if (user && doctorId && date && time) {
-      // First ensure the user has a profile, as appointments table references it
-      const { data: profile } = await supabase.from('profiles').select('id').eq('id', user.id).single();
-      if (!profile) {
-        showAlert('Please complete and save your Profile first before booking an appointment.');
-        return;
+    try {
+      let uid = activeUserId;
+      if (!uid) {
+        const { data: { session } } = await supabase.auth.getSession();
+        uid = session?.user?.id || (await supabase.auth.getUser()).data.user?.id || null;
       }
-
-      const { error } = await supabase.from('appointments').insert({
-        patient_id: user.id,
-        doctor_id: doctorId,
-        appointment_date: date,
-        appointment_time: time,
-        reason_for_visit: reason,
-        status: 'Upcoming'
-      }).select('id').single();
       
-      if (error) {
-        console.error('Error booking appointment:', error);
-        showAlert(`Error booking appointment: ${error.message}`);
-        return;
+      if (!uid) {
+        showAlert('User not authenticated. Please refresh the page.');
+        setIsSubmitting(false);
         return;
       }
       
-      // Automatic Billing: Add consultation charge
-      await addChargeToPatient(
-        user.id, 
-        error ? null : (await supabase.from('appointments').select('id').eq('patient_id', user.id).order('created_at', { ascending: false }).limit(1).single()).data?.id, // Note: the insert .select() above is better but since we didn't destructure data, let's just fetch it or we can change destructuring.
-        'General Consultation', 
-        'Consultation', 
-        500 // Assuming 500 INR consultation fee
-      );
+      if (doctorId && date && time) {
+        // First ensure the user has a profile, as appointments table references it
+        if (uid !== 'demo-user-id') {
+          const { data: profile } = await supabase.from('profiles').select('id').eq('id', uid).single();
+          if (!profile) {
+            showAlert('Please complete and save your Profile first before booking an appointment.');
+            setIsSubmitting(false);
+            return;
+          }
+        }
 
-      setIsModalOpen(false);
-      setDoctorId('');
-      setDate('');
-      setTime('');
-      setReason('');
-      fetchAppointments();
+        if (uid === 'demo-user-id') {
+          const selectedDoc = doctors.find(d => d.id === doctorId);
+          let existing = JSON.parse(localStorage.getItem('demo_appointments') || '[]');
+          
+          if (isRescheduling) {
+            // Update existing demo appointment
+            existing = existing.map((apt: any) => {
+              if (apt.id === isRescheduling) {
+                return {
+                  ...apt,
+                  doctor_id: doctorId,
+                  appointment_date: date,
+                  appointment_time: time,
+                  reason_for_visit: reason,
+                  doctors: selectedDoc
+                };
+              }
+              return apt;
+            });
+          } else {
+            // Create new demo appointment
+            const newApt = {
+              id: 'demo-apt-' + Date.now(),
+              patient_id: uid,
+              doctor_id: doctorId,
+              appointment_date: date,
+              appointment_time: time,
+              reason_for_visit: reason,
+              status: 'Upcoming',
+              doctors: selectedDoc
+            };
+            existing = [newApt, ...existing];
+          }
+          
+          localStorage.setItem('demo_appointments', JSON.stringify(existing));
+          
+          setIsModalOpen(false);
+          setIsRescheduling(null);
+          setDoctorId('');
+          setDate('');
+          setTime('');
+          setReason('');
+          await fetchAppointments();
+          setIsSubmitting(false);
+          return;
+        }
+
+        if (isRescheduling) {
+          // Reschedule existing
+          const { error } = await supabase.from('appointments').update({
+            doctor_id: doctorId,
+            appointment_date: date,
+            appointment_time: time,
+            reason_for_visit: reason,
+          }).eq('id', isRescheduling);
+          
+          if (error) {
+            showAlert(`Error rescheduling: ${error.message}`);
+            setIsSubmitting(false);
+            return;
+          }
+        } else {
+          // Book new
+          const { error } = await supabase.from('appointments').insert({
+            patient_id: uid,
+            doctor_id: doctorId,
+            appointment_date: date,
+            appointment_time: time,
+            reason_for_visit: reason,
+            status: 'Upcoming'
+          });
+          
+          if (error) {
+            showAlert(`Error booking appointment: ${error.message}`);
+            setIsSubmitting(false);
+            return;
+          }
+          
+          // Automatic Billing
+          await addChargeToPatient(
+            uid, 
+            null, 
+            'General Consultation', 
+            'Consultation', 
+            500
+          );
+        }
+
+        setIsModalOpen(false);
+        setIsRescheduling(null);
+        setDoctorId('');
+        setDate('');
+        setTime('');
+        setReason('');
+        await fetchAppointments();
+      } else {
+        showAlert('Please fill in all required fields.');
+      }
+    } catch (err: any) {
+      console.error('Booking error:', err);
+      showAlert(`An unexpected error occurred: ${err.message || 'Unknown error'}`);
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  const handleOpenReschedule = (apt: any) => {
+    setIsRescheduling(apt.id);
+    setDoctorId(apt.doctor_id);
+    setDate(apt.appointment_date);
+    setTime(apt.appointment_time);
+    setReason(apt.reason_for_visit || '');
+    setIsModalOpen(true);
   };
 
   const handleCancel = async (id: string) => {
     if (await showConfirm('Are you sure you want to cancel this appointment?')) {
-      await supabase
-        .from('appointments')
-        .update({ status: 'Cancelled' })
-        .eq('id', id);
+      if (id.startsWith('demo-apt-')) {
+        let existing = JSON.parse(localStorage.getItem('demo_appointments') || '[]');
+        existing = existing.map((apt: any) => {
+          if (apt.id === id) return { ...apt, status: 'Cancelled' };
+          return apt;
+        });
+        localStorage.setItem('demo_appointments', JSON.stringify(existing));
+      } else {
+        await supabase
+          .from('appointments')
+          .update({ status: 'Cancelled' })
+          .eq('id', id);
+      }
       fetchAppointments();
     }
   };
@@ -105,10 +257,30 @@ export default function AppointmentsPage() {
     <div className={styles.container}>
       <div className={styles.header}>
         <h1 className={styles.title}>My Appointments</h1>
-        <button className={styles.btnPrimary} onClick={() => setIsModalOpen(true)}>
+        <button className={styles.btnPrimary} onClick={() => { setIsRescheduling(null); setIsModalOpen(true); }}>
           Book Appointment
         </button>
       </div>
+
+      {liveQueue && (
+        <div className={styles.card} style={{ marginBottom: '2rem', borderLeft: '4px solid #f59e0b', background: '#fffbeb' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#b45309', marginBottom: '0.5rem' }}>Live Queue Status (Today)</h2>
+          <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+            <div>
+              <p style={{ color: '#92400e', fontSize: '0.9rem' }}>Doctor</p>
+              <p style={{ fontWeight: 600, fontSize: '1.1rem' }}>Dr. {liveQueue.doctors?.first_name} {liveQueue.doctors?.last_name}</p>
+            </div>
+            <div>
+              <p style={{ color: '#92400e', fontSize: '0.9rem' }}>Token Number</p>
+              <p style={{ fontWeight: 700, fontSize: '1.5rem', color: '#b45309' }}>{liveQueue.queue_number}</p>
+            </div>
+            <div>
+              <p style={{ color: '#92400e', fontSize: '0.9rem' }}>Status</p>
+              <span className={styles.status} style={{ background: '#fef3c7', color: '#d97706', padding: '0.25rem 0.75rem', borderRadius: '999px', fontSize: '0.85rem', fontWeight: 600 }}>{liveQueue.status}</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className={styles.card}>
         {appointments.length === 0 ? (
@@ -130,12 +302,20 @@ export default function AppointmentsPage() {
                 
                 <div className={styles.actions}>
                   {apt.status === 'Upcoming' && (
-                    <button 
-                      className={`${styles.btnOutline} ${styles.btnDanger}`}
-                      onClick={() => handleCancel(apt.id)}
-                    >
-                      Cancel
-                    </button>
+                    <>
+                      <button 
+                        className={styles.btnOutline}
+                        onClick={() => handleOpenReschedule(apt)}
+                      >
+                        Reschedule
+                      </button>
+                      <button 
+                        className={`${styles.btnOutline} ${styles.btnDanger}`}
+                        onClick={() => handleCancel(apt.id)}
+                      >
+                        Cancel
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -147,7 +327,7 @@ export default function AppointmentsPage() {
       {isModalOpen && (
         <div className={styles.modalOverlay}>
           <div className={styles.modal}>
-            <h2 className={styles.modalTitle}>Book Appointment</h2>
+            <h2 className={styles.modalTitle}>{isRescheduling ? 'Reschedule Appointment' : 'Book Appointment'}</h2>
             <form onSubmit={handleBook}>
               <div className={styles.formGroup}>
                 <label className={styles.label}>Select Doctor</label>
@@ -199,11 +379,11 @@ export default function AppointmentsPage() {
               </div>
 
               <div className={styles.modalActions}>
-                <button type="button" className={styles.btnOutline} onClick={() => setIsModalOpen(false)}>
+                <button type="button" className={styles.btnOutline} onClick={() => { setIsModalOpen(false); setIsRescheduling(null); }}>
                   Close
                 </button>
-                <button type="submit" className={styles.btnPrimary}>
-                  Book Now
+                <button type="submit" className={styles.btnPrimary} disabled={isSubmitting}>
+                  {isSubmitting ? 'Booking...' : (isRescheduling ? 'Save Changes' : 'Book Now')}
                 </button>
               </div>
             </form>

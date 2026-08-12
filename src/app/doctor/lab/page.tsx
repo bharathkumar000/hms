@@ -176,9 +176,16 @@ export default function DoctorLab() {
                       </div>
                     </div>
                   </div>
-                  <span className={`${styles.status} ${lab.status === 'Pending' ? styles.statusPending : styles.statusCompleted}`}>
-                    {lab.status}
-                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
+                    <span className={`${styles.status} ${lab.status === 'Pending' ? styles.statusPending : styles.statusCompleted}`}>
+                      {lab.status}
+                    </span>
+                    {lab.report_url && (
+                      <a href={lab.report_url} target="_blank" rel="noreferrer" className={styles.btnOutline} style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', textDecoration: 'none' }}>
+                        View Report
+                      </a>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

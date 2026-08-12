@@ -1,88 +1,57 @@
-'use client';
+import { createClient } from '@/utils/supabase/server';
+import NotificationsClient from './NotificationsClient';
 
-import { useState, useEffect } from 'react';
-import { createClient } from '@/utils/supabase/client';
-import { Bell, CheckCircle } from 'lucide-react';
-import styles from '../orders/orders.module.css';
+export default async function NotificationsPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-export default function LaboratoryNotifications() {
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  let notifications: any[] = [];
+  
+  // Since this is a demo environment where anyone can be lab staff, we might want to fetch all lab-related notifications.
+  // We'll fetch notifications targeted at the user, or system notifications.
+  if (user) {
+    const { data } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    
+    notifications = data || [];
+  } else {
+    // If no user but still rendering (maybe dev mode without strict auth middleware)
+    const { data } = await supabase
+      .from('notifications')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(20);
+    notifications = data || [];
+  }
 
-  const supabase = createClient();
+  // To simulate the requested alerts if the notifications table doesn't have them yet:
+  // (In a real app, triggers would populate the notifications table)
+  const { data: urgentOrders } = await supabase
+    .from('lab_orders')
+    .select('*, patient:profiles!patient_id(first_name, last_name)')
+    .eq('urgent', true)
+    .in('status', ['Pending', 'Sample Requested']);
+    
+  if (urgentOrders) {
+    urgentOrders.forEach(order => {
+      // Create a virtual notification for the UI if it doesn't exist
+      notifications.push({
+        id: 'virtual-urgent-' + order.id,
+        title: 'Urgent Test Request',
+        message: `Urgent test ${order.test_category} requested for ${order.patient?.first_name} ${order.patient?.last_name}.`,
+        type: 'Urgent',
+        is_read: false,
+        created_at: order.created_at,
+        isVirtual: true
+      });
+    });
+  }
+  
+  // Sort by date again after injecting virtuals
+  notifications.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
-
-  const fetchNotifications = async () => {
-    setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      
-      if (data) setNotifications(data);
-    }
-    setLoading(false);
-  };
-
-  const markAsRead = async (id: string) => {
-    await supabase.from('notifications').update({ is_read: true }).eq('id', id);
-    fetchNotifications();
-  };
-
-  return (
-    <div className={styles.container}>
-      <header className={styles.header}>
-        <div>
-          <h1 className={styles.title}>Notifications</h1>
-          <p className={styles.details}>Stay updated with system alerts and lab requests.</p>
-        </div>
-      </header>
-
-      <div className={styles.card}>
-        {loading ? (
-          <p>Loading notifications...</p>
-        ) : notifications.length > 0 ? (
-          <div className={styles.list}>
-            {notifications.map(notif => (
-              <div key={notif.id} className={styles.listItem} style={{ backgroundColor: notif.is_read ? 'transparent' : 'rgba(41, 92, 255, 0.05)', padding: '1rem', borderRadius: '8px' }}>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                  <div style={{ color: notif.is_read ? 'var(--color-text-secondary)' : 'var(--color-primary)', marginTop: '0.25rem' }}>
-                    <Bell size={20} />
-                  </div>
-                  <div>
-                    <div className={styles.itemMain} style={{ fontWeight: notif.is_read ? 500 : 700 }}>
-                      {notif.title}
-                    </div>
-                    <div className={styles.itemSub} style={{ color: notif.is_read ? 'var(--color-text-secondary)' : 'var(--color-text-primary)' }}>
-                      {notif.message}
-                    </div>
-                    <div className={styles.itemSub} style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>
-                      {new Date(notif.created_at).toLocaleString()}
-                    </div>
-                  </div>
-                </div>
-                
-                {!notif.is_read && (
-                  <button className={styles.btnOutline} onClick={() => markAsRead(notif.id)} style={{ padding: '0.5rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <CheckCircle size={18} />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--color-text-secondary)' }}>
-            <Bell size={48} style={{ opacity: 0.2, marginBottom: '1rem' }} />
-            <p>You have no new notifications.</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+  return <NotificationsClient initialNotifications={notifications} userId={user?.id || ''} />;
 }

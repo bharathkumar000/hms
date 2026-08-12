@@ -16,7 +16,9 @@ export default function DoctorConsultations() {
   // Form State
   const [diagnosis, setDiagnosis] = useState('');
   const [symptoms, setSymptoms] = useState('');
+  const [examination, setExamination] = useState('');
   const [treatment, setTreatment] = useState('');
+  const [followUpDate, setFollowUpDate] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const supabase = createClient();
@@ -43,7 +45,9 @@ export default function DoctorConsultations() {
     setActiveConsultation(apt);
     setDiagnosis('');
     setSymptoms('');
+    setExamination('');
     setTreatment('');
+    setFollowUpDate('');
   };
 
   const handleCompleteConsultation = async (e: React.FormEvent) => {
@@ -56,22 +60,40 @@ export default function DoctorConsultations() {
     // Combine notes
     const combinedNotes = `Symptoms: ${symptoms}\n\nTreatment Plan: ${treatment}`;
 
-    // 1. Insert into medical_records
-    const { error: recordError } = await supabase
+    const { data: recordData, error: recordError } = await supabase
       .from('medical_records')
       .insert({
         patient_id: activeConsultation.patient_id,
-        doctor_id: doctorId, // Use logged in doctor ID
+        doctor_id: doctorId,
         appointment_id: activeConsultation.id,
         diagnosis: diagnosis,
         doctor_notes: combinedNotes,
         record_date: new Date().toISOString().split('T')[0]
-      });
+      })
+      .select('id')
+      .single();
 
-    if (recordError) {
+    if (recordError || !recordData) {
       showAlert('Failed to save medical record.');
       setSubmitting(false);
       return;
+    }
+
+    // 2. Insert into treatment_plans
+    const { error: planError } = await supabase
+      .from('treatment_plans')
+      .insert({
+        record_id: recordData.id,
+        patient_id: activeConsultation.patient_id,
+        doctor_id: doctorId,
+        symptoms: symptoms,
+        examination_findings: examination,
+        treatment_instructions: treatment,
+        follow_up_date: followUpDate || null
+      });
+
+    if (planError) {
+      console.error('Failed to save treatment plan:', planError);
     }
 
     // 2. Update appointment status
@@ -131,13 +153,34 @@ export default function DoctorConsultations() {
               </div>
 
               <div className={styles.formGroupFull}>
-                <label className={styles.label}>Treatment Plan & Follow-up</label>
+                <label className={styles.label}>Clinical Examination Findings</label>
                 <textarea 
                   className={styles.textarea} 
                   required
-                  placeholder="Prescribed treatments, lifestyle changes, follow-up..."
+                  placeholder="Observations from clinical exam..."
+                  value={examination}
+                  onChange={e => setExamination(e.target.value)}
+                />
+              </div>
+
+              <div className={styles.formGroupFull}>
+                <label className={styles.label}>Treatment Plan</label>
+                <textarea 
+                  className={styles.textarea} 
+                  required
+                  placeholder="Prescribed treatments, lifestyle changes..."
                   value={treatment}
                   onChange={e => setTreatment(e.target.value)}
+                />
+              </div>
+
+              <div className={styles.formGroupFull}>
+                <label className={styles.label}>Follow-up Date (Optional)</label>
+                <input 
+                  type="date" 
+                  className={styles.input} 
+                  value={followUpDate}
+                  onChange={e => setFollowUpDate(e.target.value)}
                 />
               </div>
             </div>

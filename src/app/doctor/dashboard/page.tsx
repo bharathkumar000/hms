@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server';
-import { Calendar, AlertCircle, Users, Activity } from 'lucide-react';
+import { Calendar, AlertCircle, Users, Activity, Bed, Bell, FilePlus, Microscope, Coffee } from 'lucide-react';
+import Link from 'next/link';
 import styles from './dashboard.module.css';
 
 export default async function DoctorDashboard() {
@@ -39,9 +40,26 @@ export default async function DoctorDashboard() {
     .order('priority', { ascending: false }) // e.g. Critical first
     .limit(3);
 
+  // Fetch admitted patients assigned to this doctor
+  const { data: admissions } = await supabase
+    .from('admissions')
+    .select('*, profiles(first_name, last_name), beds(bed_number, rooms(room_number, wards(name)))')
+    .eq('status', 'Admitted')
+    // In a real app we'd filter by doctor.eq('assigned_doctor_id', profile.id)
+    .limit(3);
+
+  // Fetch notifications
+  const { data: notifications } = await supabase
+    .from('notifications')
+    .select('*')
+    .eq('is_read', false)
+    .order('created_at', { ascending: false })
+    .limit(3);
+
   // Stats
   const appointmentsCount = appointments?.length || 0;
   const emergenciesCount = emergencies?.length || 0;
+  const admissionsCount = admissions?.length || 0;
   const pendingConsultationsCount = appointments?.filter(a => a.status === 'Upcoming').length || 0;
 
   return (
@@ -84,7 +102,18 @@ export default async function DoctorDashboard() {
           </div>
           <p className={styles.cardContent}>{emergenciesCount} active emergency alerts.</p>
         </div>
+
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <div className={styles.iconWrapper} style={{ background: '#e0e7ff', color: '#4338ca' }}>
+              <Bed size={24} />
+            </div>
+            <h2 className={styles.cardTitle}>Admitted Patients</h2>
+          </div>
+          <p className={styles.cardContent}>{admissionsCount} patients currently admitted.</p>
+        </div>
       </div>
+
 
       <div className={styles.grid}>
         {/* Today's Schedule List */}
@@ -144,6 +173,34 @@ export default async function DoctorDashboard() {
               ))
             ) : (
               <p className={styles.itemSub}>No active emergency cases.</p>
+            )}
+          </div>
+        </div>
+
+        {/* Notifications */}
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <div className={styles.iconWrapper} style={{ background: '#fef3c7', color: '#d97706' }}>
+              <Bell size={24} />
+            </div>
+            <h2 className={styles.cardTitle}>Notifications</h2>
+          </div>
+          
+          <div className={styles.list}>
+            {notifications && notifications.length > 0 ? (
+              notifications.map((notif: any) => (
+                <div key={notif.id} className={styles.listItem}>
+                  <div>
+                    <div className={styles.itemMain}>{notif.title}</div>
+                    <div className={styles.itemSub}>{notif.message}</div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <span className={styles.status} style={{ background: '#f3f4f6', color: '#4b5563' }}>New</span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className={styles.itemSub}>No new notifications.</p>
             )}
           </div>
         </div>

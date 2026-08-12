@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server';
-import { Users, Calendar, Clock, CreditCard } from 'lucide-react';
+import { Users, Calendar, Clock, ClipboardList, ArrowRightCircle, PlusCircle, CreditCard, UserPlus, Activity, LogOut } from 'lucide-react';
+import Link from 'next/link';
 import styles from './dashboard.module.css';
 
 export default async function ReceptionDashboard() {
@@ -25,17 +26,22 @@ export default async function ReceptionDashboard() {
   // Fetch today's data
   const today = new Date().toISOString().split('T')[0];
 
-  const [appointments, queue, bills, profiles] = await Promise.all([
+  const [appointments, queue, bills, profiles, admissionsData, notifications] = await Promise.all([
     supabase.from('appointments').select('*').eq('appointment_date', today),
     supabase.from('patient_queue').select('*, profiles(first_name, last_name)').gte('check_in_time', `${today}T00:00:00Z`).order('check_in_time', { ascending: false }).limit(5),
     supabase.from('bills').select('amount').gte('created_at', `${today}T00:00:00Z`),
-    supabase.from('profiles').select('id').gte('created_at', `${today}T00:00:00Z`)
+    supabase.from('profiles').select('id').gte('created_at', `${today}T00:00:00Z`),
+    supabase.from('admissions').select('status, admission_date, discharge_date').or(`admission_date.gte.${today}T00:00:00Z,discharge_date.gte.${today}T00:00:00Z`),
+    supabase.from('notifications').select('*').order('created_at', { ascending: false }).limit(5)
   ]);
 
   const appointmentsCount = appointments.data?.length || 0;
   const waitingCount = queue.data?.filter(q => q.status === 'Waiting').length || 0;
   const newPatientsCount = profiles.data?.length || 0;
-  const billingTotal = bills.data?.reduce((sum, bill) => sum + Number(bill.amount), 0) || 0;
+  const walkInCount = queue.data?.filter(q => q.appointment_id === null).length || 0;
+  
+  const admissionsToday = admissionsData.data?.filter(a => a.admission_date && a.admission_date.startsWith(today)).length || 0;
+  const dischargesToday = admissionsData.data?.filter(a => a.discharge_date && a.discharge_date.startsWith(today)).length || 0;
 
   return (
     <div className={styles.container}>
@@ -47,13 +53,13 @@ export default async function ReceptionDashboard() {
       </header>
 
       {/* Stats Cards */}
-      <div className={styles.grid}>
+      <div className={styles.grid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
         <div className={styles.card}>
           <div className={styles.cardHeader}>
             <div className={styles.iconWrapper}>
               <Calendar size={24} />
             </div>
-            <h2 className={styles.cardTitle}>Today's Appointments</h2>
+            <h2 className={styles.cardTitle}>Appointments</h2>
           </div>
           <div className={styles.statValue}>{appointmentsCount}</div>
         </div>
@@ -63,7 +69,7 @@ export default async function ReceptionDashboard() {
             <div className={styles.iconWrapper}>
               <Clock size={24} />
             </div>
-            <h2 className={styles.cardTitle}>Waiting in Queue</h2>
+            <h2 className={styles.cardTitle}>Patients Waiting</h2>
           </div>
           <div className={styles.statValue} style={{ color: '#a16207' }}>{waitingCount}</div>
         </div>
@@ -71,7 +77,7 @@ export default async function ReceptionDashboard() {
         <div className={styles.card}>
           <div className={styles.cardHeader}>
             <div className={styles.iconWrapperSuccess}>
-              <Users size={24} />
+              <UserPlus size={24} />
             </div>
             <h2 className={styles.cardTitle}>New Registrations</h2>
           </div>
@@ -80,16 +86,37 @@ export default async function ReceptionDashboard() {
 
         <div className={styles.card}>
           <div className={styles.cardHeader}>
-            <div className={styles.iconWrapperSuccess}>
-              <CreditCard size={24} />
+            <div className={styles.iconWrapper}>
+              <Users size={24} />
             </div>
-            <h2 className={styles.cardTitle}>Today's Billing</h2>
+            <h2 className={styles.cardTitle}>Walk-ins</h2>
           </div>
-          <div className={styles.statValue} style={{ color: '#166534' }}>${billingTotal.toFixed(2)}</div>
+          <div className={styles.statValue}>{walkInCount}</div>
+        </div>
+        
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <div className={styles.iconWrapperSuccess}>
+              <ClipboardList size={24} />
+            </div>
+            <h2 className={styles.cardTitle}>Admissions Today</h2>
+          </div>
+          <div className={styles.statValue} style={{ color: '#166534' }}>{admissionsToday}</div>
+        </div>
+        
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <div className={styles.iconWrapper}>
+              <Activity size={24} />
+            </div>
+            <h2 className={styles.cardTitle}>Discharges Today</h2>
+          </div>
+          <div className={styles.statValue}>{dischargesToday}</div>
         </div>
       </div>
 
-      <div className={styles.grid}>
+      <div className={styles.grid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))' }}>
+
         {/* Live Queue Overview */}
         <div className={styles.card}>
           <h2 className={styles.cardTitle} style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>
@@ -114,6 +141,30 @@ export default async function ReceptionDashboard() {
             ) : (
               <p className={styles.itemSub}>No patients checked in yet.</p>
             )}
+          </div>
+        </div>
+
+        {/* Recent Notifications */}
+        <div className={styles.card}>
+          <h2 className={styles.cardTitle} style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>
+            Recent Notifications
+          </h2>
+          <div className={styles.list}>
+            {notifications.data && notifications.data.length > 0 ? (
+              notifications.data.map((n: any) => (
+                <div key={n.id} className={styles.listItem}>
+                  <div>
+                    <div className={styles.itemMain}>{n.title}</div>
+                    <div className={styles.itemSub}>{n.message}</div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className={styles.itemSub}>No new notifications.</p>
+            )}
+            <Link href="/reception/notifications" style={{ display: 'block', marginTop: '1rem', color: 'var(--color-primary)', fontSize: '0.875rem', fontWeight: '500' }}>
+              View all notifications <ArrowRightCircle size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />
+            </Link>
           </div>
         </div>
       </div>

@@ -22,12 +22,13 @@ export default function ReceptionReports() {
     setLoading(true);
     const today = new Date().toISOString().split('T')[0];
 
-    const [profiles, appointments, queue, bills, payments] = await Promise.all([
+    const [profiles, appointments, queue, bills, payments, admissions] = await Promise.all([
       supabase.from('profiles').select('id, created_at').gte('created_at', `${today}T00:00:00Z`),
       supabase.from('appointments').select('*').eq('appointment_date', today),
       supabase.from('patient_queue').select('*').gte('check_in_time', `${today}T00:00:00Z`),
       supabase.from('bills').select('*').gte('created_at', `${today}T00:00:00Z`),
-      supabase.from('payments').select('*').gte('payment_date', `${today}T00:00:00Z`)
+      supabase.from('payments').select('*').gte('payment_date', `${today}T00:00:00Z`),
+      supabase.from('admissions').select('status, admission_date, actual_discharge_date').or(`admission_date.gte.${today}T00:00:00Z,actual_discharge_date.gte.${today}T00:00:00Z`)
     ]);
 
     const newPatients = profiles.data?.length || 0;
@@ -43,6 +44,9 @@ export default function ReceptionReports() {
     const totalBilled = bills.data?.reduce((sum, b) => sum + Number(b.amount), 0) || 0;
     const totalCollected = payments.data?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
     
+    const admissionsToday = admissions.data?.filter((a: any) => a.admission_date && a.admission_date.startsWith(today)).length || 0;
+    const dischargesToday = admissions.data?.filter((a: any) => a.actual_discharge_date && a.actual_discharge_date.startsWith(today)).length || 0;
+    
     // Group payments by method
     const paymentMethods = payments.data?.reduce((acc: any, p) => {
       acc[p.payment_method] = (acc[p.payment_method] || 0) + Number(p.amount);
@@ -54,7 +58,8 @@ export default function ReceptionReports() {
       totalApts, completedApts, cancelledApts,
       totalCheckins, avgWaitTime,
       billsGenerated, totalBilled, totalCollected,
-      paymentMethods
+      paymentMethods,
+      admissionsToday, dischargesToday
     });
 
     setLoading(false);
@@ -98,7 +103,7 @@ export default function ReceptionReports() {
               <span className={styles.statValue} style={{ color: '#dc2626' }}>{stats.cancelledApts}</span>
             </div>
             <div className={styles.statRow}>
-              <span className={styles.statLabel}>Total Check-ins</span>
+              <span className={styles.statLabel}>Total Check-ins (Queue)</span>
               <span className={styles.statValue}>{stats.totalCheckins}</span>
             </div>
             <div className={styles.statRow}>
@@ -107,14 +112,22 @@ export default function ReceptionReports() {
             </div>
           </div>
 
-          {/* Registrations */}
+          {/* Registrations & Admissions */}
           <div className={styles.card}>
             <h2 className={styles.sectionTitle}>
-              <FileText size={20} color="var(--color-primary)" /> Registrations
+              <FileText size={20} color="var(--color-primary)" /> Registrations & Admissions
             </h2>
             <div className={styles.statRow}>
               <span className={styles.statLabel}>New Patients Registered</span>
               <span className={styles.statValue} style={{ color: '#166534' }}>{stats.newPatients}</span>
+            </div>
+            <div className={styles.statRow}>
+              <span className={styles.statLabel}>Admitted Today</span>
+              <span className={styles.statValue} style={{ color: '#a16207' }}>{stats.admissionsToday}</span>
+            </div>
+            <div className={styles.statRow}>
+              <span className={styles.statLabel}>Discharged Today</span>
+              <span className={styles.statValue}>{stats.dischargesToday}</span>
             </div>
           </div>
 

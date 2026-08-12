@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
@@ -21,14 +21,15 @@ import styles from './layout.module.css';
 
 const navItems = [
   { name: 'Dashboard', href: '/laboratory/dashboard', icon: LayoutDashboard },
-  { name: 'Test Orders', href: '/laboratory/orders', icon: ClipboardList },
-  { name: 'Sample Tracking', href: '/laboratory/samples', icon: TestTube },
-  { name: 'Processing', href: '/laboratory/processing', icon: Activity },
+  { name: 'Test Requests', href: '/laboratory/requests', icon: ClipboardList },
+  { name: 'Sample Management', href: '/laboratory/samples', icon: TestTube },
+  { name: 'Test Processing', href: '/laboratory/processing', icon: Activity },
   { name: 'Report Management', href: '/laboratory/reports', icon: FileText },
-  { name: 'Urgent Cases', href: '/laboratory/urgent', icon: AlertTriangle },
-  { name: 'Archive', href: '/laboratory/archive', icon: Archive },
+  { name: 'Patient Test History', href: '/laboratory/history', icon: Archive },
+  { name: 'Equipment & Inventory', href: '/laboratory/equipment', icon: FlaskConical },
   { name: 'Notifications', href: '/laboratory/notifications', icon: Bell },
-  { name: 'Settings', href: '/laboratory/settings', icon: Settings },
+  { name: 'Reports', href: '/laboratory/analytics', icon: FileText },
+  { name: 'Profile', href: '/laboratory/profile', icon: Settings },
 ];
 
 export default function LaboratoryLayout({ children }: { children: React.ReactNode }) {
@@ -36,6 +37,22 @@ export default function LaboratoryLayout({ children }: { children: React.ReactNo
   const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
+  
+
+  useEffect(() => {
+    if (pathname.endsWith('/login')) {
+      return;
+    }
+    const cookieMatch = document.cookie.match(/(?:^|; )demo_auth=([^;]*)/);
+    if (!cookieMatch || cookieMatch[1] !== 'laboratory') {
+      window.location.href = '/laboratory/login';
+    } else {
+      }
+  }, [pathname, router]);
+
+  if (pathname.endsWith('/login')) {
+    return <>{children}</>;
+  }
 
   const handleLogout = async () => {
     setLoading(true);

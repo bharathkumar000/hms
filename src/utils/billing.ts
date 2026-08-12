@@ -36,7 +36,8 @@ export const addChargeToPatient = async (
           appointment_id: appointmentId,
           status: 'Pending',
           bill_type: 'General',
-          amount: 0 // Will be calculated on generation
+          total_amount: 0,
+          amount_paid: 0
         }])
         .select('id')
         .single();

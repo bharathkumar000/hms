@@ -1,0 +1,266 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.subtitle {
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+  margin-top: 0.5rem;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  flex: 1;
+  max-width: 500px;
+}
+
+.searchIcon {
+  color: var(--color-text-secondary);
+  margin-right: 0.5rem;
+}
+
+.searchInput {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 1rem;
+  color: var(--color-text-primary);
+  width: 100%;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 1.5rem;
+}
+
+.card {
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.headerInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.testName {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.barcode {
+  font-family: monospace;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+}
+
+.statusBadge {
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.statusCollected {
+  background-color: #e0e7ff;
+  color: #4f46e5;
+}
+
+.statusProcessing {
+  background-color: #fef9c3;
+  color: #a16207;
+}
+
+.cardBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.patientInfo {
+  margin-bottom: 1.5rem;
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+}
+
+.patientInfo strong {
+  color: var(--color-text-primary);
+}
+
+.actionCenter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem 0;
+  background-color: var(--color-light);
+  border-radius: 8px;
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.btnStart {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 0.5rem;
+}
+
+.btnStart:hover:not(:disabled) {
+  background-color: var(--color-secondary);
+  transform: translateY(-2px);
+}
+
+.resultsForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.textarea {
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 0.95rem;
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(41, 92, 255, 0.1);
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.btnDraft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: white;
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.6rem 1.25rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btnDraft:hover:not(:disabled) {
+  background-color: var(--color-light);
+}
+
+.btnComplete {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #22c55e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1.25rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btnComplete:hover:not(:disabled) {
+  background-color: #16a34a;
+}
+
+.btnStart:disabled, .btnDraft:disabled, .btnComplete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.emptyState {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  background-color: var(--color-card-bg);
+  border: 1px dashed var(--color-border);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.emptyState h3 {
+  margin-top: 1rem;
+  font-size: 1.25rem;
+  color: var(--color-text-primary);
+}
+
+.emptyState p {
+  color: var(--color-text-secondary);
+  margin-top: 0.5rem;
+}
