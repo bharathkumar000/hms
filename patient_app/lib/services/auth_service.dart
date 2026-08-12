@@ -19,8 +19,22 @@ class AuthService {
 
   static String? get currentUserId => currentUser?.id;
 
-  static Future<bool> login(String email, String password) async {
+  /// Demo credentials matching the web portal (`ID 1 / password 1`).
+  /// These map to a dedicated Supabase demo patient so RLS + realtime work
+  /// normally. Create the account by running
+  /// `supabase/create_demo_patient.sql` in the SQL editor once.
+  static const String demoLoginId = '1';
+  static const String demoLoginPass = '1';
+  static const String demoEmail = 'demo@patient.com';
+
+  static bool isDemoCredentials(String login, String password) =>
+      login.trim() == demoLoginId && password == demoLoginPass;
+
+  static Future<bool> login(String emailOrId, String password) async {
     try {
+      final email = isDemoCredentials(emailOrId, password)
+          ? demoEmail
+          : emailOrId.trim();
       await _client.auth.signInWithPassword(email: email, password: password);
       return _client.auth.currentUser != null;
     } on AuthException {

@@ -76,7 +76,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     bool valid = true;
     setState(() {
       _emailError = _emailController.text.trim().isEmpty ? 'Email is required' : null;
-      if (_emailError == null) {
+      if (_emailError == null &&
+          !AuthService.isDemoCredentials(
+            _emailController.text.trim(),
+            _passwordController.text,
+          )) {
         final email = _emailController.text.trim();
         final emailOk = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email);
         if (!emailOk) {
@@ -399,7 +403,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Use the login credentials provided by the hospital. Your account is created by reception when you register.',
+              'Demo access: use ID 1 and password 1. Otherwise use the login credentials provided by the hospital (created by reception when you register).',
               style: GoogleFonts.inter(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,

@@ -1,0 +1,23 @@
+Analyzing patient_app...                                        
+
+   info • Use the null-aware operator '?.' rather than an explicit 'null' comparison. Try using '?.' • lib/models/patient_models.dart:7:27 • prefer_null_aware_operators
+   info • Unnecessary use of 'toList' in a spread. Try removing the invocation of 'toList' • lib/screens/admission/admission_screen.dart:55:52 • unnecessary_to_list_in_spreads
+   info • Unnecessary use of 'toList' in a spread. Try removing the invocation of 'toList' • lib/screens/admission/admission_screen.dart:69:65 • unnecessary_to_list_in_spreads
+   info • Unnecessary use of 'toList' in a spread. Try removing the invocation of 'toList' • lib/screens/admission/admission_screen.dart:74:52 • unnecessary_to_list_in_spreads
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/screens/admission/admission_screen.dart:92:25 • prefer_const_constructors
+   info • Unnecessary use of 'toList' in a spread. Try removing the invocation of 'toList' • lib/screens/appointments/appointments_screen.dart:139:80 • unnecessary_to_list_in_spreads
+   info • Unnecessary use of 'toList' in a spread. Try removing the invocation of 'toList' • lib/screens/billing/billing_screen.dart:70:56 • unnecessary_to_list_in_spreads
+   info • Unnecessary use of 'toList' in a spread. Try removing the invocation of 'toList' • lib/screens/billing/billing_screen.dart:207:16 • unnecessary_to_list_in_spreads
+   info • Unnecessary use of 'toList' in a spread. Try removing the invocation of 'toList' • lib/screens/canteen/canteen_screen.dart:411:46 • unnecessary_to_list_in_spreads
+   info • Unnecessary use of 'toList' in a spread. Try removing the invocation of 'toList' • lib/screens/canteen/canteen_screen.dart:512:16 • unnecessary_to_list_in_spreads
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/screens/dashboard/dashboard_screen.dart:561:9 • prefer_const_constructors
+   info • Unnecessary use of 'toList' in a spread. Try removing the invocation of 'toList' • lib/screens/laboratory/laboratory_screen.dart:64:51 • unnecessary_to_list_in_spreads
+   info • Unnecessary use of 'toList' in a spread. Try removing the invocation of 'toList' • lib/screens/pharmacy/pharmacy_screen.dart:61:79 • unnecessary_to_list_in_spreads
+   info • Unnecessary use of 'toList' in a spread. Try removing the invocation of 'toList' • lib/screens/pharmacy/pharmacy_screen.dart:66:82 • unnecessary_to_list_in_spreads
+   info • Unnecessary use of 'toList' in a spread. Try removing the invocation of 'toList' • lib/screens/records/records_screen.dart:103:73 • unnecessary_to_list_in_spreads
+   info • Unnecessary use of 'toList' in a spread. Try removing the invocation of 'toList' • lib/screens/records/records_screen.dart:104:74 • unnecessary_to_list_in_spreads
+   info • Unnecessary use of 'toList' in a spread. Try removing the invocation of 'toList' • lib/screens/records/records_screen.dart:179:66 • unnecessary_to_list_in_spreads
+   info • Unnecessary braces in a string interpolation. Try removing the braces • lib/services/patient_service.dart:85:36 • unnecessary_brace_in_string_interps
+   info • Use a function declaration rather than a variable assignment to bind a function to a name. Try rewriting the closure assignment as a function declaration • lib/services/patient_service.dart:117:11 • prefer_function_declarations_over_variables
+
+19 issues found. (ran in 4.8s)
