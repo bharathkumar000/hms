@@ -609,7 +609,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                   Expanded(
                     child: _vitalBox(
                       icon: Icons.water_drop_rounded,
-                      label: 'Sugar ${today?.sugarType != null ? '(${today!.sugarType})' : ''}',
+                      label: (today?.sugarType?.isNotEmpty ?? false)
+                          ? 'Sugar (${today?.sugarType})'
+                          : 'Sugar',
                       value: today?.bloodSugar?.toString() ?? '—',
                       unit: 'mg/dL',
                       color: const Color(0xFF2563EB),
@@ -1068,14 +1070,14 @@ class _DashboardScreenState extends State<DashboardScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SectionHeader('Quick Access'),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         GridView.count(
-          crossAxisCount: 4,
+          crossAxisCount: 3,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 0.78,
+          mainAxisSpacing: 14,
+          crossAxisSpacing: 14,
+          childAspectRatio: 1.05,
           children: [
             ModuleTile(
               icon: Icons.calendar_month_rounded,
