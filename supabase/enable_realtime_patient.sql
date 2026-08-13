@@ -21,6 +21,8 @@ ALTER TABLE public.food_categories   REPLICA IDENTITY FULL;
 ALTER TABLE public.menu_items        REPLICA IDENTITY FULL;
 ALTER TABLE public.canteen_orders    REPLICA IDENTITY FULL;
 ALTER TABLE public.canteen_order_items REPLICA IDENTITY FULL;
+ALTER TABLE public.daily_vitals      REPLICA IDENTITY FULL;
+ALTER TABLE public.medication_reminders REPLICA IDENTITY FULL;
 
 -- Add every patient portal table to the realtime publication (idempotent).
 DO $$
@@ -30,7 +32,8 @@ DECLARE
     'profiles', 'appointments', 'patient_queue', 'medical_records',
     'prescriptions', 'bills', 'bill_items', 'lab_orders',
     'notifications', 'admissions', 'bed_transfers', 'doctors',
-    'food_categories', 'menu_items', 'canteen_orders', 'canteen_order_items'
+    'food_categories', 'menu_items', 'canteen_orders', 'canteen_order_items',
+    'daily_vitals', 'medication_reminders'
   ];
 BEGIN
   FOREACH t IN ARRAY tbl LOOP

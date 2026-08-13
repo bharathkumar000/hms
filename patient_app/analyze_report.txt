@@ -10,7 +10,9 @@ Analyzing patient_app...
    info • Unnecessary use of 'toList' in a spread. Try removing the invocation of 'toList' • lib/screens/billing/billing_screen.dart:207:16 • unnecessary_to_list_in_spreads
    info • Unnecessary use of 'toList' in a spread. Try removing the invocation of 'toList' • lib/screens/canteen/canteen_screen.dart:411:46 • unnecessary_to_list_in_spreads
    info • Unnecessary use of 'toList' in a spread. Try removing the invocation of 'toList' • lib/screens/canteen/canteen_screen.dart:512:16 • unnecessary_to_list_in_spreads
-   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/screens/dashboard/dashboard_screen.dart:561:9 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/screens/dashboard/dashboard_screen.dart:838:19 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/screens/dashboard/dashboard_screen.dart:839:28 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/screens/dashboard/dashboard_screen.dart:1161:9 • prefer_const_constructors
    info • Unnecessary use of 'toList' in a spread. Try removing the invocation of 'toList' • lib/screens/laboratory/laboratory_screen.dart:64:51 • unnecessary_to_list_in_spreads
    info • Unnecessary use of 'toList' in a spread. Try removing the invocation of 'toList' • lib/screens/pharmacy/pharmacy_screen.dart:61:79 • unnecessary_to_list_in_spreads
    info • Unnecessary use of 'toList' in a spread. Try removing the invocation of 'toList' • lib/screens/pharmacy/pharmacy_screen.dart:66:82 • unnecessary_to_list_in_spreads
@@ -20,4 +22,4 @@ Analyzing patient_app...
    info • Unnecessary braces in a string interpolation. Try removing the braces • lib/services/patient_service.dart:85:36 • unnecessary_brace_in_string_interps
    info • Use a function declaration rather than a variable assignment to bind a function to a name. Try rewriting the closure assignment as a function declaration • lib/services/patient_service.dart:117:11 • prefer_function_declarations_over_variables
 
-19 issues found. (ran in 4.8s)
+21 issues found. (ran in 2.7s)

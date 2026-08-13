@@ -237,6 +237,24 @@ class PatientService {
         Doctor.fromMap,
       );
 
+  static LiveList<DailyVital> watchDailyVitals() => _map(
+        _watchRows(
+          'daily_vitals',
+          eqColumn: 'patient_id',
+          orderColumn: 'recorded_on',
+        ),
+        DailyVital.fromMap,
+      );
+
+  static LiveList<MedicationReminder> watchMedicationReminders() => _map(
+        _watchRows(
+          'medication_reminders',
+          eqColumn: 'patient_id',
+          orderColumn: 'created_at',
+        ),
+        MedicationReminder.fromMap,
+      );
+
   static LiveList<CanteenCategory> watchCanteenCategories() => _map(
         _watchRows('food_categories', orderColumn: 'name', descending: false),
         CanteenCategory.fromMap,
@@ -375,6 +393,60 @@ class PatientService {
   static Future<String?> saveProfile(PatientProfile profile) async {
     try {
       await _client.from('profiles').upsert({'id': _uid, ...profile.toMap()});
+      return null;
+    } on PostgrestException catch (e) {
+      return e.message;
+    }
+  }
+
+  /// Upserts today's vitals reading (one row per patient per day).
+  static Future<String?> saveDailyVital({
+    required int? bpSystolic,
+    required int? bpDiastolic,
+    required int? bloodSugar,
+    String sugarType = 'Fasting',
+    String? notes,
+    DateTime? on,
+  }) async {
+    try {
+      final date = (on ?? DateTime.now());
+      final iso = '${date.year.toString().padLeft(4, '0')}-'
+          '${date.month.toString().padLeft(2, '0')}-'
+          '${date.day.toString().padLeft(2, '0')}';
+      await _client.from('daily_vitals').upsert({
+        'patient_id': _uid,
+        'recorded_on': iso,
+        'bp_systolic': bpSystolic,
+        'bp_diastolic': bpDiastolic,
+        'blood_sugar': bloodSugar,
+        'sugar_type': sugarType,
+        'notes': notes,
+      }, onConflict: 'patient_id,recorded_on');
+      return null;
+    } on PostgrestException catch (e) {
+      return e.message;
+    }
+  }
+
+  /// Adds/removes a medication reminder for the current patient.
+  static Future<String?> saveMedicationReminder({
+    required String medicineName,
+    String? dosage,
+    String? frequency,
+    List<String> reminderTimes = const [],
+    String? scheduleNote,
+    bool isActive = true,
+  }) async {
+    try {
+      await _client.from('medication_reminders').insert({
+        'patient_id': _uid,
+        'medicine_name': medicineName,
+        'dosage': dosage,
+        'frequency': frequency,
+        'reminder_times': reminderTimes,
+        'schedule_note': scheduleNote,
+        'is_active': isActive,
+      });
       return null;
     } on PostgrestException catch (e) {
       return e.message;

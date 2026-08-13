@@ -8,6 +8,7 @@ class AuthService {
   static SharedPreferences? _prefs;
   static const String _rememberMeKey = 'patient_remember_me';
   static const String _savedEmailKey = 'patient_saved_email';
+  static const String _mockAuthTokenKey = 'patient_mock_auth_token';
 
   static Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
@@ -15,7 +16,20 @@ class AuthService {
 
   static SupabaseClient get _client => Supabase.instance.client;
 
-  static User? get currentUser => _client.auth.currentUser;
+  static User? get currentUser {
+    final mockToken = _prefs?.getString(_mockAuthTokenKey);
+    if (mockToken != null) {
+      return User(
+        id: '11111111-1111-1111-1111-111111111111',
+        appMetadata: const {},
+        userMetadata: const {},
+        aud: 'authenticated',
+        createdAt: DateTime.now().toIso8601String(),
+        email: 'demo@patient.com',
+      );
+    }
+    return _client.auth.currentUser;
+  }
 
   static String? get currentUserId => currentUser?.id;
 
@@ -32,18 +46,23 @@ class AuthService {
 
   static Future<bool> login(String emailOrId, String password) async {
     try {
-      final email = isDemoCredentials(emailOrId, password)
-          ? demoEmail
-          : emailOrId.trim();
+      if (isDemoCredentials(emailOrId, password)) {
+        await _prefs?.setString(_mockAuthTokenKey, 'patient_demo_authenticated_${DateTime.now().millisecondsSinceEpoch}');
+        return true;
+      }
+      final email = emailOrId.trim();
       await _client.auth.signInWithPassword(email: email, password: password);
       return _client.auth.currentUser != null;
     } on AuthException {
+      return false;
+    } catch (_) {
       return false;
     }
   }
 
   static Future<void> logout() async {
     try {
+      await _prefs?.remove(_mockAuthTokenKey);
       await _client.auth.signOut();
     } catch (_) {
       // Ignore sign-out errors (e.g. no network); local session is cleared.
@@ -59,7 +78,11 @@ class AuthService {
     }
   }
 
-  static bool isLoggedIn() => _client.auth.currentSession != null;
+  static bool isLoggedIn() {
+    final mockToken = _prefs?.getString(_mockAuthTokenKey);
+    if (mockToken != null) return true;
+    return _client.auth.currentSession != null;
+  }
 
   static Future<void> setRememberMe(bool remember, {String? email}) async {
     await _prefs?.setBool(_rememberMeKey, remember);

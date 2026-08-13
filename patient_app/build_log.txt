@@ -4,5 +4,6 @@ WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.i
 WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
 WARNING: Restricted methods will be blocked in a future release unless native access is enabled
 
-Running Gradle task 'assembleDebug'...                             33.7s
+Warning: SDK processing. This version only understands SDK XML versions up to 3 but an SDK XML file of version 4 was encountered. This can happen if you use versions of Android Studio and the command-line tools that were released at different times.
+Running Gradle task 'assembleDebug'...                             30.0s
 ✓ Built build/app/outputs/flutter-apk/app-debug.apk

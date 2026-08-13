@@ -9,7 +9,6 @@ import '../admission/admission_screen.dart';
 import '../billing/billing_screen.dart';
 import '../laboratory/laboratory_screen.dart';
 import '../notifications/notifications_screen.dart';
-import '../pharmacy/pharmacy_screen.dart';
 import '../settings/settings_screen.dart';
 import '../home/tab_controller.dart';
 
@@ -20,9 +19,13 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   late LiveList<Admission> _admissions;
   late LiveList<HospitalNotification> _notifications;
+  late LiveList<DailyVital> _vitals;
+  late LiveList<MedicationReminder> _reminders;
   late Future<PatientProfile?> _profileFuture;
   late Future<Appointment?> _nextAppointmentFuture;
   late Future<double> _pendingBillsFuture;
@@ -31,8 +34,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     _admissions = PatientService.watchAdmissions();
     _notifications = PatientService.watchNotifications();
+    _vitals = PatientService.watchDailyVitals();
+    _reminders = PatientService.watchMedicationReminders();
     _profileFuture = PatientService.fetchProfile();
     _nextAppointmentFuture = PatientService.fetchNextAppointment();
     _pendingBillsFuture = PatientService.fetchPendingBillsTotal();
@@ -41,8 +47,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   void dispose() {
+    _tabController.dispose();
     _admissions.dispose();
     _notifications.dispose();
+    _vitals.dispose();
+    _reminders.dispose();
     super.dispose();
   }
 
@@ -58,34 +67,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: RefreshIndicator(
-        onRefresh: () async {
-          _reload();
-          await Future.wait([
-            _profileFuture.then((_) {}),
-            _nextAppointmentFuture.then((_) {}),
-            _pendingBillsFuture.then((_) {}),
-            _latestLabFuture.then((_) {}),
-          ]);
-        },
-        color: const Color(0xFF2563EB),
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-          children: [
-            _buildHeader(),
-            const SizedBox(height: 20),
-            _buildAdmissionCard(),
-            const SizedBox(height: 20),
-            _buildNextAppointmentCard(),
-            const SizedBox(height: 24),
-            _buildSummaryRow(),
-            const SizedBox(height: 24),
-            _buildQuickAccess(),
-            const SizedBox(height: 24),
-            _buildRecentNotifications(),
-          ],
-        ),
+      child: Column(
+        children: [
+          _buildHeader(),
+          const SizedBox(height: 4),
+          _buildTabBar(),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildTodayTab(),
+                _buildMedicationsTab(),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -97,35 +93,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final profile = snapshot.data;
         final name = profile?.fullName ?? 'Patient';
         final greeting = _greetingFor(DateTime.now());
-        return Row(
-          children: [
-            InitialsAvatar(name, size: 48),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '$greeting,',
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: const Color(0xFF64748B),
-                      fontWeight: FontWeight.w500,
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+          child: Row(
+            children: [
+              InitialsAvatar(name, size: 48),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$greeting,',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: const Color(0xFF64748B),
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                  Text(
-                    name,
-                    style: GoogleFonts.inter(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1E293B),
+                    Text(
+                      name,
+                      style: GoogleFonts.inter(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1E293B),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            _buildNotificationBell(),
-          ],
+              _buildNotificationBell(),
+            ],
+          ),
         );
       },
     );
@@ -178,6 +177,77 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildTabBar() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE2E8F0).withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        indicator: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0F172A).withValues(alpha: 0.08),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        dividerColor: Colors.transparent,
+        indicatorSize: TabBarIndicatorSize.tab,
+        labelColor: const Color(0xFF1E293B),
+        unselectedLabelColor: const Color(0xFF64748B),
+        labelStyle: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700),
+        unselectedLabelStyle: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500),
+        tabs: const [
+          Tab(text: 'Today'),
+          Tab(text: 'Medications'),
+        ],
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Today tab
+  // ---------------------------------------------------------------------------
+
+  Widget _buildTodayTab() {
+    return RefreshIndicator(
+      onRefresh: () async {
+        _reload();
+        await Future.wait([
+          _profileFuture.then((_) {}),
+          _nextAppointmentFuture.then((_) {}),
+          _pendingBillsFuture.then((_) {}),
+          _latestLabFuture.then((_) {}),
+        ]);
+      },
+      color: const Color(0xFF2563EB),
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        children: [
+          _buildAdmissionCard(),
+          const SizedBox(height: 20),
+          _buildVitalsCard(),
+          const SizedBox(height: 20),
+          _buildNextAppointmentCard(),
+          const SizedBox(height: 24),
+          _buildSummaryRow(),
+          const SizedBox(height: 24),
+          _buildQuickAccess(),
+          const SizedBox(height: 24),
+          _buildRecentNotifications(),
+        ],
+      ),
     );
   }
 
@@ -462,6 +532,537 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Daily Vitals card (BP / sugar)
+  // ---------------------------------------------------------------------------
+
+  Widget _buildVitalsCard() {
+    return StreamBuilder<List<DailyVital>>(
+      stream: _vitals.stream,
+      builder: (context, snapshot) {
+        final vitals = snapshot.data ?? const <DailyVital>[];
+        final today = vitals.isEmpty || vitals.first.recordedOn == null
+            ? null
+            : _isToday(vitals.first.recordedOn!)
+                ? vitals.first
+                : null;
+
+        return AppCard(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    height: 34,
+                    width: 34,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF059669).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.monitor_heart_rounded, color: Color(0xFF059669), size: 18),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Daily Health',
+                          style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: const Color(0xFF1E293B)),
+                        ),
+                        Text(
+                          'BP & Sugar · ${formatDate(today?.recordedOn ?? DateTime.now())}',
+                          style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => _showAddVitalsSheet(today),
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFF059669),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    ),
+                    icon: const Icon(Icons.edit_rounded, size: 16),
+                    label: Text(
+                      today == null ? 'Log' : 'Edit',
+                      style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: _vitalBox(
+                      icon: Icons.favorite_rounded,
+                      label: 'Blood Pressure',
+                      value: today?.bpLabel ?? '—',
+                      unit: 'mm Hg',
+                      color: const Color(0xFFDC2626),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _vitalBox(
+                      icon: Icons.water_drop_rounded,
+                      label: 'Sugar ${today?.sugarType != null ? '(${today!.sugarType})' : ''}',
+                      value: today?.bloodSugar?.toString() ?? '—',
+                      unit: 'mg/dL',
+                      color: const Color(0xFF2563EB),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              if (today == null)
+                Text(
+                  'No reading logged today. Tap Log to record your daily BP and sugar — nurses and doctors can view it live.',
+                  style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B), height: 1.5),
+                )
+              else if (vitals.length > 1)
+                Text(
+                  'Last logged: ${formatDate(vitals[1].recordedOn)} (${vitals[1].bpLabel ?? '—'} · ${vitals[1].bloodSugar ?? '—'})',
+                  style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8)),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _vitalBox({
+    required IconData icon,
+    required String label,
+    required String value,
+    required String unit,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.15)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 16, color: color),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF64748B)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.w800, color: const Color(0xFF1E293B)),
+          ),
+          Text(
+            unit,
+            style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFF94A3B8)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showAddVitalsSheet(DailyVital? current) async {
+    final textCtrl1 = TextEditingController(text: current?.bpSystolic?.toString() ?? '');
+    final textCtrl2 = TextEditingController(text: current?.bpDiastolic?.toString() ?? '');
+    final sugarCtrl = TextEditingController(text: current?.bloodSugar?.toString() ?? '');
+    var sugarType = current?.sugarType ?? 'Fasting';
+    String? error;
+    var saving = false;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final padding = MediaQuery.of(context).viewInsets;
+          return Container(
+            padding: EdgeInsets.fromLTRB(24, 20, 24, 24 + padding.bottom),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Center(
+                    child: Container(
+                      height: 4,
+                      width: 44,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE2E8F0),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Log Today\'s Health',
+                    style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w700, color: const Color(0xFF1E293B)),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: textCtrl1,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(labelText: 'BP Systolic (top)'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextField(
+                          controller: textCtrl2,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(labelText: 'BP Diastolic (bottom)'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: sugarCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Blood Sugar (mg/dL)'),
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    initialValue: sugarType,
+                    decoration: const InputDecoration(labelText: 'Sugar Type'),
+                    items: const [
+                      DropdownMenuItem(value: 'Fasting', child: Text('Fasting')),
+                      DropdownMenuItem(value: 'Post Meal', child: Text('Post Meal')),
+                      DropdownMenuItem(value: 'Random', child: Text('Random')),
+                    ],
+                    onChanged: (v) => setModalState(() => sugarType = v ?? 'Fasting'),
+                  ),
+                  if (error != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      error!,
+                      style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFFEF4444)),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: saving
+                          ? null
+                          : () async {
+                              int? parse(String s) => int.tryParse(s.trim());
+                              final systolic = parse(textCtrl1.text);
+                              final diastolic = parse(textCtrl2.text);
+                              final sugar = parse(sugarCtrl.text);
+                              if ((systolic ?? 0) <= 0 &&
+                                  (diastolic ?? 0) <= 0 &&
+                                  (sugar ?? 0) <= 0) {
+                                setModalState(() => error = 'Enter at least one reading.');
+                                return;
+                              }
+                              setModalState(() {
+                                error = null;
+                                saving = true;
+                              });
+                              final msg = await PatientService.saveDailyVital(
+                                bpSystolic: systolic,
+                                bpDiastolic: diastolic,
+                                bloodSugar: sugar,
+                                sugarType: sugarType,
+                              );
+                              if (!context.mounted) return;
+                              Navigator.of(context).pop();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(msg == null
+                                      ? 'Health reading saved'
+                                      : 'Could not save: $msg'),
+                                ),
+                              );
+                            },
+                      child: Text(saving ? 'Saving…' : 'Save Reading'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Medications / reminders tab
+  // ---------------------------------------------------------------------------
+
+  Widget _buildMedicationsTab() {
+    return StreamBuilder<List<MedicationReminder>>(
+      stream: _reminders.stream,
+      builder: (context, snapshot) {
+        final reminders = (snapshot.data ?? const <MedicationReminder>[])
+            .where((r) => r.isActive)
+            .toList();
+
+        return RefreshIndicator(
+          onRefresh: _reminders.refresh,
+          color: const Color(0xFF2563EB),
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: SectionHeader('Current Medication Reminders'),
+                  ),
+                  TextButton.icon(
+                    onPressed: _showAddReminderSheet,
+                    icon: const Icon(Icons.add_rounded, size: 18),
+                    label: const Text('Add'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (reminders.isEmpty)
+                const EmptyState(
+                  'No medication reminders',
+                  icon: Icons.medication_rounded,
+                  subtitle: 'Reminders added by your doctor or pharmacist will appear here, with dosage and timing.',
+                )
+              else
+                Column(
+                  children: reminders.map((r) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: AppCard(
+                        padding: const EdgeInsets.all(14),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              height: 40,
+                              width: 40,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.medication_rounded, color: Color(0xFF2563EB), size: 20),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    r.medicineName ?? 'Medication',
+                                    style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF1E293B)),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  if (r.dosage != null && r.dosage!.isNotEmpty)
+                                    Text(
+                                      'Dosage: ${r.dosage}',
+                                      style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF475569)),
+                                    ),
+                                  if (r.frequency != null && r.frequency!.isNotEmpty)
+                                    Text(
+                                      'Frequency: ${r.frequency}',
+                                      style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF475569)),
+                                    ),
+                                  const SizedBox(height: 6),
+                                  Wrap(
+                                    spacing: 6,
+                                    runSpacing: 6,
+                                    children: r.reminderTimes.isEmpty
+                                        ? [
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFF1F5F9),
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: Text(
+                                                'Take as directed',
+                                                style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B)),
+                                              ),
+                                            ),
+                                          ]
+                                        : r.reminderTimes.map((t) {
+                                            return Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: Text(
+                                                formatTime(t),
+                                                style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF2563EB)),
+                                              ),
+                                            );
+                                          }).toList(),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showAddReminderSheet() async {
+    final nameCtrl = TextEditingController();
+    final dosageCtrl = TextEditingController();
+    final freqCtrl = TextEditingController();
+    final timesCtrl = TextEditingController();
+    String? error;
+    var saving = false;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final padding = MediaQuery.of(context).viewInsets;
+          return Container(
+            padding: EdgeInsets.fromLTRB(24, 20, 24, 24 + padding.bottom),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Center(
+                    child: Container(
+                      height: 4,
+                      width: 44,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE2E8F0),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Add Medication Reminder',
+                    style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w700, color: const Color(0xFF1E293B)),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: nameCtrl,
+                    decoration: const InputDecoration(labelText: 'Medicine Name'),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: dosageCtrl,
+                    decoration: const InputDecoration(labelText: 'Dosage (e.g. 500 mg)'),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: freqCtrl,
+                    decoration: const InputDecoration(labelText: 'Frequency (e.g. Twice daily)'),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: timesCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Reminder Times',
+                      hintText: 'e.g. 08:00, 20:00 (comma-separated)',
+                    ),
+                  ),
+                  if (error != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      error!,
+                      style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFFEF4444)),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: saving
+                          ? null
+                          : () async {
+                              final name = nameCtrl.text.trim();
+                              if (name.isEmpty) {
+                                setModalState(() => error = 'Medicine name is required.');
+                                return;
+                              }
+                              final times = timesCtrl.text
+                                  .split(',')
+                                  .map((e) => e.trim())
+                                  .where((e) => e.isNotEmpty)
+                                  .toList();
+                              setModalState(() {
+                                error = null;
+                                saving = true;
+                              });
+                              final msg = await PatientService.saveMedicationReminder(
+                                medicineName: name,
+                                dosage: dosageCtrl.text.trim().isEmpty ? null : dosageCtrl.text.trim(),
+                                frequency: freqCtrl.text.trim().isEmpty ? null : freqCtrl.text.trim(),
+                                reminderTimes: times,
+                              );
+                              if (!context.mounted) return;
+                              Navigator.of(context).pop();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(msg == null
+                                      ? 'Reminder added'
+                                      : 'Could not add: $msg'),
+                                ),
+                              );
+                            },
+                      child: Text(saving ? 'Adding…' : 'Add Reminder'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Quick access + notifications
+  // ---------------------------------------------------------------------------
+
   Widget _buildQuickAccess() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -510,10 +1111,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               icon: Icons.medication_rounded,
               label: 'Prescriptions',
               color: const Color(0xFFDC2626),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const PharmacyScreen()),
-              ),
+              onTap: () {
+                _tabController.animateTo(1);
+              },
             ),
             ModuleTile(
               icon: Icons.receipt_long_rounded,
@@ -646,5 +1246,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (hour < 12) return 'Good Morning';
     if (hour < 17) return 'Good Afternoon';
     return 'Good Evening';
+  }
+
+  bool _isToday(DateTime d) {
+    final now = DateTime.now();
+    return d.year == now.year && d.month == now.month && d.day == now.day;
   }
 }

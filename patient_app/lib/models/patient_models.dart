@@ -746,6 +746,84 @@ class CanteenOrderItem {
   }
 }
 
+/// A single day's vitals reading (blood pressure + blood sugar).
+class DailyVital {
+  final String id;
+  final DateTime? recordedOn;
+  final int? bpSystolic;
+  final int? bpDiastolic;
+  final int? bloodSugar;
+  final String? sugarType;
+  final String? notes;
+
+  const DailyVital({
+    required this.id,
+    this.recordedOn,
+    this.bpSystolic,
+    this.bpDiastolic,
+    this.bloodSugar,
+    this.sugarType,
+    this.notes,
+  });
+
+  String? get bpLabel {
+    if (bpSystolic == null && bpDiastolic == null) return null;
+    return '${bpSystolic ?? '—'}/${bpDiastolic ?? '—'}';
+  }
+
+  factory DailyVital.fromMap(Map<String, dynamic> map) {
+    final m = asMap(map);
+    return DailyVital(
+      id: str(m['id']) ?? '',
+      recordedOn: dateVal(m['recorded_on']),
+      bpSystolic: (m['bp_systolic'] as num?)?.toInt(),
+      bpDiastolic: (m['bp_diastolic'] as num?)?.toInt(),
+      bloodSugar: (m['blood_sugar'] as num?)?.toInt(),
+      sugarType: str(m['sugar_type']),
+      notes: str(m['notes']),
+    );
+  }
+}
+
+/// A scheduled medication reminder for the patient.
+class MedicationReminder {
+  final String id;
+  final String? medicineName;
+  final String? dosage;
+  final String? frequency;
+  final List<String> reminderTimes;
+  final String? scheduleNote;
+  final String? prescriptionId;
+  final bool isActive;
+
+  const MedicationReminder({
+    required this.id,
+    this.medicineName,
+    this.dosage,
+    this.frequency,
+    this.reminderTimes = const [],
+    this.scheduleNote,
+    this.prescriptionId,
+    this.isActive = true,
+  });
+
+  factory MedicationReminder.fromMap(Map<String, dynamic> map) {
+    final m = asMap(map);
+    final times = m['reminder_times'];
+    return MedicationReminder(
+      id: str(m['id']) ?? '',
+      medicineName: str(m['medicine_name']),
+      dosage: str(m['dosage']),
+      frequency: str(m['frequency']),
+      reminderTimes:
+          times is List ? times.map((e) => e.toString()).where((e) => e.isNotEmpty).toList() : const [],
+      scheduleNote: str(m['schedule_note']),
+      prescriptionId: str(m['prescription_id']),
+      isActive: m['is_active'] != false,
+    );
+  }
+}
+
 List<Map<String, dynamic>> _parseList(dynamic v) {
   if (v == null) return const [];
   if (v is List) return v.map(asMap).toList();
