@@ -20,6 +20,12 @@
 # production
 /build
 
+# flutter/dev-tool artifacts (the Flutter app lives in /patient_app)
+.dart_tool/
+.metadata
+*.iml
+.idea/
+
 # misc
 .DS_Store
 *.pem
