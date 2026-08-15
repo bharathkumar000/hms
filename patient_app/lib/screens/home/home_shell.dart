@@ -6,6 +6,7 @@ import '../canteen/canteen_screen.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../profile/profile_screen.dart';
 import '../records/records_screen.dart';
+import 'app_drawer.dart';
 import 'tab_controller.dart';
 
 class HomeShell extends StatefulWidget {
@@ -39,6 +40,7 @@ class _HomeShellState extends State<HomeShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
+      drawer: const AppDrawer(),
       body: IndexedStack(
         index: _index,
         children: const [

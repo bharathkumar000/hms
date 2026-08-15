@@ -5,11 +5,7 @@ import '../../config/app_config.dart';
 import '../../models/patient_models.dart';
 import '../../services/patient_service.dart';
 import '../../widgets/common_widgets.dart';
-import '../admission/admission_screen.dart';
-import '../billing/billing_screen.dart';
-import '../laboratory/laboratory_screen.dart';
 import '../notifications/notifications_screen.dart';
-import '../settings/settings_screen.dart';
 import '../home/tab_controller.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -97,6 +93,20 @@ class _DashboardScreenState extends State<DashboardScreen>
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
           child: Row(
             children: [
+              GestureDetector(
+                onTap: () => Scaffold.of(context).openDrawer(),
+                child: Container(
+                  height: 44,
+                  width: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: const Icon(Icons.menu_rounded, color: Color(0xFF1E293B), size: 22),
+                ),
+              ),
+              const SizedBox(width: 12),
               InitialsAvatar(name, size: 48),
               const SizedBox(width: 12),
               Expanded(
@@ -242,8 +252,6 @@ class _DashboardScreenState extends State<DashboardScreen>
           _buildNextAppointmentCard(),
           const SizedBox(height: 24),
           _buildSummaryRow(),
-          const SizedBox(height: 24),
-          _buildQuickAccess(),
           const SizedBox(height: 24),
           _buildRecentNotifications(),
         ],
@@ -837,7 +845,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             children: [
               Row(
                 children: [
-                  Expanded(
+                  const Expanded(
                     child: SectionHeader('Current Medication Reminders'),
                   ),
                   TextButton.icon(
@@ -1062,105 +1070,14 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   // ---------------------------------------------------------------------------
-  // Quick access + notifications
+  // Recent notifications
   // ---------------------------------------------------------------------------
-
-  Widget _buildQuickAccess() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SectionHeader('Quick Access'),
-        const SizedBox(height: 14),
-        GridView.count(
-          crossAxisCount: 3,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 14,
-          crossAxisSpacing: 14,
-          childAspectRatio: 1.05,
-          children: [
-            ModuleTile(
-              icon: Icons.calendar_month_rounded,
-              label: 'Appointments',
-              color: const Color(0xFF2563EB),
-              onTap: () => shellTab.value = shellTabOf('appointments'),
-            ),
-            ModuleTile(
-              icon: Icons.bed_rounded,
-              label: 'Admission',
-              color: const Color(0xFF0891B2),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AdmissionScreen()),
-              ),
-            ),
-            ModuleTile(
-              icon: Icons.folder_copy_rounded,
-              label: 'Records',
-              color: const Color(0xFF0D9488),
-              onTap: () => shellTab.value = shellTabOf('records'),
-            ),
-            ModuleTile(
-              icon: Icons.science_rounded,
-              label: 'Laboratory',
-              color: const Color(0xFF7C3AED),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const LaboratoryScreen()),
-              ),
-            ),
-            ModuleTile(
-              icon: Icons.medication_rounded,
-              label: 'Prescriptions',
-              color: const Color(0xFFDC2626),
-              onTap: () {
-                _tabController.animateTo(1);
-              },
-            ),
-            ModuleTile(
-              icon: Icons.receipt_long_rounded,
-              label: 'Billing',
-              color: const Color(0xFFD97706),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const BillingScreen()),
-              ),
-            ),
-            ModuleTile(
-              icon: Icons.restaurant_rounded,
-              label: 'Canteen',
-              color: const Color(0xFFF59E0B),
-              onTap: () => shellTab.value = shellTabOf('canteen'),
-            ),
-            ModuleTile(
-              icon: Icons.notifications_rounded,
-              label: 'Alerts',
-              color: const Color(0xFFEF4444),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-              ),
-            ),
-            ModuleTile(
-              icon: Icons.settings_rounded,
-              label: 'Settings',
-              color: const Color(0xFF64748B),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const SettingsScreen()),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
 
   Widget _buildRecentNotifications() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionHeader(
+        const SectionHeader(
           'Recent Updates',
           trailing: 'Hospital · ${AppConfig.hospitalName}',
         ),
